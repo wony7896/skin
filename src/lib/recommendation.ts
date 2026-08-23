@@ -1,0 +1,214 @@
+import { desc, eq } from "drizzle-orm";
+import { db } from "@/db";
+import {
+  excludedIngredients,
+  ingredients,
+  productIngredients,
+  products,
+  skinProfiles,
+} from "@/db/schema";
+
+export type ProductCategory =
+  | "cleansing"
+  | "toner"
+  | "essence_serum"
+  | "cream_lotion"
+  | "sunscreen_spot";
+
+export type SkinGoal =
+  | "brightening"
+  | "wrinkle_elasticity"
+  | "pore"
+  | "hydration"
+  | "trouble_care";
+
+// PRD 섹션 3 "카테고리별 컨선 특화 성분" — 에센스/세럼 표에 명시된 매핑을 기준으로,
+// 같은 액티브가 다른 카테고리 제품에도 쓰이면 동일하게 가점한다.
+const GOAL_INGREDIENTS: Record<SkinGoal, string[]> = {
+  brightening: ["Niacinamide", "Ascorbic Acid"],
+  wrinkle_elasticity: ["Retinol", "Adenosine", "Copper Tripeptide-1"],
+  trouble_care: ["Salicylic Acid", "Melaleuca Alternifolia (Tea Tree) Leaf Oil"],
+  hydration: ["Hyaluronic Acid", "Panthenol", "Squalane", "Ceramide NP", "Glycerin"],
+  pore: ["Salicylic Acid", "Niacinamide"],
+};
+
+// PRD 섹션 3 클렌징 행: 계면활성제 종류(아미노산계 vs 설페이트계) 구분
+const MILD_SURFACTANTS = ["Sodium Cocoyl Isethionate", "Cocamidopropyl Betaine"];
+const HARSH_SURFACTANTS = ["Sodium Lauryl Sulfate", "Sodium Laureth Sulfate"];
+
+const GOAL_PRIORITY_WEIGHT = [3, 2]; // 1순위, 2순위
+const GOAL_SECONDARY_WEIGHT = 1; // 우선순위엔 없지만 관심 목표로 고른 것
+
+export type ScoredProduct = {
+  productId: string;
+  name: string;
+  brand: string | null;
+  externalUrl: string;
+  score: number;
+  reasons: string[];
+};
+
+export async function getRecommendations(
+  userId: string,
+  category: ProductCategory,
+): Promise<ScoredProduct[]> {
+  const [latestProfile] = await db
+    .select({
+      goals: skinProfiles.goals,
+      goalPriority: skinProfiles.goalPriority,
+      diagnosedConditions: skinProfiles.diagnosedConditions,
+      reactionTypes: skinProfiles.reactionTypes,
+    })
+    .from(skinProfiles)
+    .where(eq(skinProfiles.userId, userId))
+    .orderBy(desc(skinProfiles.createdAt))
+    .limit(1);
+
+  const goals = (latestProfile?.goals ?? []) as SkinGoal[];
+  const goalPriority = (latestProfile?.goalPriority ?? []) as SkinGoal[];
+  const isSensitive =
+    (latestProfile?.reactionTypes?.length ?? 0) > 0 ||
+    (latestProfile?.diagnosedConditions ?? []).some((c) =>
+      ["atopic_dermatitis", "rosacea"].includes(c),
+    );
+
+  const excluded = await db
+    .select({ ingredientId: excludedIngredients.ingredientId })
+    .from(excludedIngredients)
+    .where(eq(excludedIngredients.userId, userId));
+  const excludedIds = new Set(excluded.map((e) => e.ingredientId));
+
+  const rows = await db
+    .select({
+      productId: products.id,
+      name: products.name,
+      brand: products.brand,
+      externalUrl: products.externalUrl,
+      inciName: ingredients.inciName,
+      koreanName: ingredients.koreanName,
+      ingredientId: ingredients.id,
+    })
+    .from(products)
+    .leftJoin(productIngredients, eq(productIngredients.productId, products.id))
+    .leftJoin(ingredients, eq(ingredients.id, productIngredients.ingredientId))
+    .where(eq(products.category, category));
+
+  const byProduct = new Map<
+    string,
+    {
+      name: string;
+      brand: string | null;
+      externalUrl: string;
+      ingredientIds: Set<string>;
+      inciNames: Set<string>;
+      koreanNames: Map<string, string | null>;
+    }
+  >();
+
+  for (const row of rows) {
+    if (!byProduct.has(row.productId)) {
+      byProduct.set(row.productId, {
+        name: row.name,
+        brand: row.brand,
+        externalUrl: row.externalUrl,
+        ingredientIds: new Set(),
+        inciNames: new Set(),
+        koreanNames: new Map(),
+      });
+    }
+    const entry = byProduct.get(row.productId)!;
+    if (row.ingredientId) {
+      entry.ingredientIds.add(row.ingredientId);
+      entry.inciNames.add(row.inciName!);
+      entry.koreanNames.set(row.inciName!, row.koreanName);
+    }
+  }
+
+  const scored: ScoredProduct[] = [];
+
+  for (const [productId, product] of byProduct) {
+    // ① 안전성 필터 — 제외 성분이 하나라도 있으면 후보에서 완전히 배제
+    const hasExcluded = [...product.ingredientIds].some((id) =>
+      excludedIds.has(id),
+    );
+    if (hasExcluded) continue;
+
+    let score = 0;
+    const reasons: string[] = [];
+
+    // ② 목표 적합도 — F의 우선순위 반영
+    for (const goal of goals) {
+      const rankInPriority = goalPriority.indexOf(goal);
+      const weight =
+        rankInPriority !== -1
+          ? GOAL_PRIORITY_WEIGHT[rankInPriority] ?? GOAL_SECONDARY_WEIGHT
+          : GOAL_SECONDARY_WEIGHT;
+
+      const matchedIngredients = GOAL_INGREDIENTS[goal].filter((inci) =>
+        product.inciNames.has(inci),
+      );
+      if (matchedIngredients.length > 0) {
+        score += weight * 10;
+        const label = product.koreanNames.get(matchedIngredients[0]) ?? matchedIngredients[0];
+        reasons.push(`목표(${GOAL_LABELS[goal]})에 맞는 ${label} 함유`);
+      }
+    }
+
+    // 카테고리별 규칙 (PRD 섹션 3)
+    if (category === "cleansing") {
+      if (MILD_SURFACTANTS.some((n) => product.inciNames.has(n))) {
+        score += 10;
+        reasons.push("아미노산계 저자극 세정 성분 사용");
+      }
+      if (HARSH_SURFACTANTS.some((n) => product.inciNames.has(n))) {
+        score -= 10;
+        reasons.push("설페이트계 세정 성분 포함 — 자극 가능성");
+      }
+    }
+
+    if (category === "toner" && isSensitive) {
+      if (product.inciNames.has("Alcohol Denat.")) {
+        score -= 15;
+        reasons.push("민감 피부 프로필 — 알코올 함유로 감점");
+      } else {
+        score += 5;
+        reasons.push("알코올프리");
+      }
+    }
+
+    scored.push({
+      productId,
+      name: product.name,
+      brand: product.brand,
+      externalUrl: product.externalUrl,
+      score,
+      reasons,
+    });
+  }
+
+  return scored.sort((a, b) => b.score - a.score);
+}
+
+export const GOAL_LABELS: Record<SkinGoal, string> = {
+  brightening: "미백 · 톤업",
+  wrinkle_elasticity: "주름 · 탄력",
+  pore: "모공",
+  hydration: "수분 · 보습",
+  trouble_care: "트러블 개선",
+};
+
+export const CATEGORY_ORDER: ProductCategory[] = [
+  "cleansing",
+  "toner",
+  "essence_serum",
+  "cream_lotion",
+  "sunscreen_spot",
+];
+
+export const CATEGORY_LABELS: Record<ProductCategory, string> = {
+  cleansing: "클렌징",
+  toner: "토너",
+  essence_serum: "에센스/세럼",
+  cream_lotion: "크림/로션",
+  sunscreen_spot: "선크림/스팟케어",
+};
