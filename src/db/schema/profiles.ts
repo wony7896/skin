@@ -1,6 +1,7 @@
 import {
   boolean,
   integer,
+  jsonb,
   numeric,
   pgTable,
   smallint,
@@ -18,6 +19,13 @@ import {
 } from "./enums";
 import { ingredients, medications } from "./ingredients";
 import { products } from "./products";
+
+// E. 현재 루틴 — 카테고리별 사용 중 제품 (제품 검색/매칭 파이프라인 도입 전까지는 자유 입력)
+export type RoutineProductEntry = {
+  category: string;
+  productName: string;
+  frequency: string;
+};
 
 // 진단마다 생성되는 스냅샷(버전이 있는 시계열) — 이전 스냅샷과 비교해 변화량 계산 (PRD 섹션 2)
 export const skinProfiles = pgTable("skin_profiles", {
@@ -46,6 +54,16 @@ export const skinProfiles = pgTable("skin_profiles", {
   acneSeverity: text("acne_severity"),
   eczemaPoemScore: smallint("eczema_poem_score"),
 
+  // B. 피부 질환 병력 (약물은 별도 user_medications 테이블)
+  diagnosedConditions: text("diagnosed_conditions").array(),
+  recentProcedures: text("recent_procedures"),
+
+  // C. 알레르기·트러블 유발 성분 (제품→성분 역추적 파이프라인 도입 전까지 제품명은 자유 입력)
+  reactionTypes: text("reaction_types").array(),
+  suspectedProductNames: text("suspected_product_names").array(),
+  hadPatchTest: boolean("had_patch_test"),
+  atopicFamilyHistory: boolean("atopic_family_history"),
+
   // D. 생활·환경 요인
   humidityRegion: text("humidity_region"),
   uvExposureHours: numeric("uv_exposure_hours"),
@@ -53,6 +71,12 @@ export const skinProfiles = pgTable("skin_profiles", {
   sleepHours: numeric("sleep_hours"),
   stressLevel: smallint("stress_level"),
   isSmoker: boolean("is_smoker"),
+
+  // E. 현재 루틴
+  currentRoutineProducts: jsonb(
+    "current_routine_products",
+  ).$type<RoutineProductEntry[]>(),
+  lastNewProductAt: timestamp("last_new_product_at", { withTimezone: true }),
 
   // F. 스킨케어 목표 — 다중선택 + 우선순위(배열 앞쪽일수록 우선)
   goals: skinGoalEnum("goals").array(),

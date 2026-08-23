@@ -8,6 +8,13 @@
       "when": 1787455448529,
       "tag": "0000_white_warpath",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1787456979016,
+      "tag": "0001_wonderful_satana",
+      "breakpoints": true
     }
   ]
 }
