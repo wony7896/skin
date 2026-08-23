@@ -40,6 +40,7 @@ export function StepC({
         <TextListInput
           values={data.suspectedProductNames}
           onChange={(v) => update({ suspectedProductNames: v })}
+          addLabel="+ 추가 (제품명 검색 또는 사진 촬영은 준비 중 — 우선 이름으로 입력해주세요)"
           placeholder="제품명 (예: OO 브랜드 비타민C 세럼)"
         />
       </Field>

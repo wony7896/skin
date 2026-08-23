@@ -183,10 +183,12 @@ export function TextListInput({
   values,
   onChange,
   placeholder,
+  addLabel = "+ 추가",
 }: {
   values: string[];
   onChange: (next: string[]) => void;
   placeholder?: string;
+  addLabel?: string;
 }) {
   function updateAt(index: number, next: string) {
     const copy = [...values];
@@ -223,7 +225,7 @@ export function TextListInput({
         onClick={() => onChange([...values, ""])}
         className="rounded-lg border border-dashed border-neutral-300 px-3 py-2 text-sm text-neutral-500 hover:border-neutral-400"
       >
-        + 추가 (제품명 검색 또는 사진 촬영은 준비 중 — 우선 이름으로 입력해주세요)
+        {addLabel}
       </button>
     </div>
   );

@@ -83,9 +83,11 @@ export const skinProfiles = pgTable("skin_profiles", {
   goals: skinGoalEnum("goals").array(),
   goalPriority: skinGoalEnum("goal_priority").array(),
 
-  // 체크인 전용 필드 (섹션 1-②)
+  // 체크인 전용 필드 (섹션 1-②) — 온보딩의 BSTI 점수보다 가벼운 슬라이더 3종
   troubleAreas: text("trouble_areas").array(),
   photoUrl: text("photo_url"),
+  rednessLevel: smallint("redness_level"),
+  flakingLevel: smallint("flaking_level"),
   recentRecommendationSatisfaction: smallint(
     "recent_recommendation_satisfaction",
   ),
