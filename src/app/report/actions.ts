@@ -16,6 +16,7 @@ export async function submitTroubleReport(input: {
   bodyArea: string;
   onsetDays: number | null;
   severity: number;
+  photoPath: string | null;
 }) {
   const supabase = await createClient();
   const {
@@ -34,6 +35,7 @@ export async function submitTroubleReport(input: {
       bodyArea: input.bodyArea || null,
       onsetDays: input.onsetDays,
       severity: input.severity,
+      photoUrl: input.photoPath,
     })
     .returning({ id: troubleReports.id });
 

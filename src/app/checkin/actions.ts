@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/server";
 
 export async function submitCheckin(input: {
   troubleAreas: string[];
+  photoPath: string | null;
   rednessLevel: number;
   flakingLevel: number;
   oilyDryScore: number;
@@ -72,6 +73,7 @@ export async function submitCheckin(input: {
     // 이번 체크인에서 실제로 갱신하는 필드
     oilyDryScore: input.oilyDryScore,
     troubleAreas: input.troubleAreas,
+    photoUrl: input.photoPath,
     rednessLevel: input.rednessLevel,
     flakingLevel: input.flakingLevel,
     recentRecommendationSatisfaction: input.recentRecommendationSatisfaction,

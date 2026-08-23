@@ -8,6 +8,7 @@ import {
   StepHeading,
   TextListInput,
 } from "@/components/onboarding/primitives";
+import { PhotoUpload } from "@/components/photo/PhotoUpload";
 import { SKIN_GOAL_LABELS, type SkinGoal } from "@/components/onboarding/types";
 
 const ALL_GOALS = Object.keys(SKIN_GOAL_LABELS) as SkinGoal[];
@@ -24,6 +25,7 @@ type Baseline = {
 
 export function CheckinForm({ baseline }: { baseline: Baseline }) {
   const [troubleAreas, setTroubleAreas] = useState<string[]>([]);
+  const [photoPath, setPhotoPath] = useState<string | null>(null);
   const [rednessLevel, setRednessLevel] = useState(2);
   const [flakingLevel, setFlakingLevel] = useState(2);
   const [oilyDryScore, setOilyDryScore] = useState(
@@ -74,6 +76,7 @@ export function CheckinForm({ baseline }: { baseline: Baseline }) {
     startTransition(async () => {
       const res = await submitCheckin({
         troubleAreas,
+        photoPath,
         rednessLevel,
         flakingLevel,
         oilyDryScore,
@@ -112,13 +115,17 @@ export function CheckinForm({ baseline }: { baseline: Baseline }) {
         description="1분이면 충분해요. 지난 진단 이후 달라진 점만 알려주세요."
       />
 
-      <Field label="최근 2주간 트러블이 난 부위 (사진 업로드는 준비 중)">
+      <Field label="최근 2주간 트러블이 난 부위">
         <TextListInput
           values={troubleAreas}
           onChange={setTroubleAreas}
           addLabel="+ 부위 추가"
           placeholder="예: 턱선, 볼"
         />
+      </Field>
+
+      <Field label="피부 사진">
+        <PhotoUpload path={photoPath} onChange={setPhotoPath} />
       </Field>
 
       <Field label="홍조 정도">

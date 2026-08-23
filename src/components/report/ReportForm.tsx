@@ -6,6 +6,7 @@ import {
   submitTroubleReport,
   type ImplicatedIngredient,
 } from "@/app/report/actions";
+import { PhotoUpload } from "@/components/photo/PhotoUpload";
 
 type Stage =
   | { step: "form" }
@@ -21,6 +22,7 @@ export function ReportForm({
   const [bodyArea, setBodyArea] = useState("");
   const [onsetDays, setOnsetDays] = useState(2);
   const [severity, setSeverity] = useState(3);
+  const [photoPath, setPhotoPath] = useState<string | null>(null);
   const [checked, setChecked] = useState<Record<string, boolean>>({});
   const [stage, setStage] = useState<Stage>({ step: "form" });
   const [error, setError] = useState<string | null>(null);
@@ -38,6 +40,7 @@ export function ReportForm({
         bodyArea,
         onsetDays,
         severity,
+        photoPath,
       });
       if (!res.success) {
         setError(res.error);
@@ -202,6 +205,13 @@ export function ReportForm({
           className="w-full accent-neutral-900"
         />
         <div className="mt-1 text-sm text-neutral-500">{severity}</div>
+      </div>
+
+      <div className="mb-5">
+        <label className="mb-2 block text-sm font-medium text-neutral-700">
+          증상 사진
+        </label>
+        <PhotoUpload path={photoPath} onChange={setPhotoPath} />
       </div>
 
       {error && <p className="mb-4 text-sm text-red-600">{error}</p>}
