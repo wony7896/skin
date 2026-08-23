@@ -7,6 +7,7 @@ import {
   smallint,
   text,
   timestamp,
+  unique,
   uuid,
 } from "drizzle-orm/pg-core";
 import { authUsers } from "./auth";
@@ -96,24 +97,31 @@ export const skinProfiles = pgTable("skin_profiles", {
 });
 
 // 확정/의심 단계가 있는 성분 제외 리스트. 반복 보고될수록 확정 신뢰도 상승 (PRD 섹션 2)
-export const excludedIngredients = pgTable("excluded_ingredients", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  userId: uuid("user_id")
-    .notNull()
-    .references(() => authUsers.id, { onDelete: "cascade" }),
-  ingredientId: uuid("ingredient_id")
-    .notNull()
-    .references(() => ingredients.id, { onDelete: "restrict" }),
-  status: ingredientStatusEnum("status").notNull().default("suspected"),
-  source: reportSourceEnum("source").notNull(),
-  reportCount: integer("report_count").notNull().default(1),
-  firstReportedAt: timestamp("first_reported_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-  lastReportedAt: timestamp("last_reported_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-});
+export const excludedIngredients = pgTable(
+  "excluded_ingredients",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => authUsers.id, { onDelete: "cascade" }),
+    ingredientId: uuid("ingredient_id")
+      .notNull()
+      .references(() => ingredients.id, { onDelete: "restrict" }),
+    status: ingredientStatusEnum("status").notNull().default("suspected"),
+    source: reportSourceEnum("source").notNull(),
+    reportCount: integer("report_count").notNull().default(1),
+    firstReportedAt: timestamp("first_reported_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    lastReportedAt: timestamp("last_reported_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    // 사용자당 성분 하나에 한 행만 존재 — 재보고 시 report_count를 올리는 upsert 대상
+    unique().on(table.userId, table.ingredientId),
+  ],
+);
 
 // B파트 복용/도포 약물 입력 — 사진/바코드로 medications를 매칭한 기록
 export const userMedications = pgTable("user_medications", {
