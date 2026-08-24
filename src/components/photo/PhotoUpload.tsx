@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { analyzeSkinPhoto } from "@/app/photo/actions";
 import { createClient } from "@/lib/supabase/client";
 
 const MAX_SIZE_BYTES = 10 * 1024 * 1024;
@@ -9,12 +10,16 @@ const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 export function PhotoUpload({
   path,
   onChange,
+  onAnalyzed,
 }: {
   path: string | null;
   onChange: (path: string | null) => void;
+  /** 제공하면 업로드 직후 이전 체크인 사진과 홍조를 상대 비교해 결과를 전달한다 (색상 기반 휴리스틱, 참고용) */
+  onAnalyzed?: (comparison: "increased" | "decreased" | "similar" | null) => void;
 }) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -60,6 +65,15 @@ export function PhotoUpload({
     }
 
     onChange(objectPath);
+
+    if (onAnalyzed) {
+      setIsAnalyzing(true);
+      const result = await analyzeSkinPhoto(objectPath);
+      setIsAnalyzing(false);
+      if (result.success) {
+        onAnalyzed(result.comparison);
+      }
+    }
   }
 
   function handleRemove() {
@@ -80,6 +94,8 @@ export function PhotoUpload({
           <div className="text-sm">
             {isUploading ? (
               <span className="text-neutral-500">업로드 중...</span>
+            ) : isAnalyzing ? (
+              <span className="text-neutral-500">사진 분석 중...</span>
             ) : path ? (
               <span className="text-neutral-600">업로드 완료</span>
             ) : null}

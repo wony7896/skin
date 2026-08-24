@@ -26,6 +26,9 @@ type Baseline = {
 export function CheckinForm({ baseline }: { baseline: Baseline }) {
   const [troubleAreas, setTroubleAreas] = useState<string[]>([]);
   const [photoPath, setPhotoPath] = useState<string | null>(null);
+  const [rednessComparison, setRednessComparison] = useState<
+    "increased" | "decreased" | "similar" | null
+  >(null);
   const [rednessLevel, setRednessLevel] = useState(2);
   const [flakingLevel, setFlakingLevel] = useState(2);
   const [oilyDryScore, setOilyDryScore] = useState(
@@ -125,11 +128,47 @@ export function CheckinForm({ baseline }: { baseline: Baseline }) {
       </Field>
 
       <Field label="피부 사진">
-        <PhotoUpload path={photoPath} onChange={setPhotoPath} />
+        <PhotoUpload
+          path={photoPath}
+          onChange={setPhotoPath}
+          onAnalyzed={setRednessComparison}
+        />
+        <p className="mt-1 text-xs text-neutral-400">
+          업로드하면 직전 체크인 사진과 색상을 비교해 홍조가 늘었는지
+          줄었는지 참고로 알려드려요 (간단한 색상 분석이라 절대적인 수치는
+          아니에요).
+        </p>
       </Field>
 
       <Field label="홍조 정도">
         <SliderField min={0} max={5} value={rednessLevel} onChange={setRednessLevel} />
+        {rednessComparison && rednessComparison !== "similar" && (
+          <div className="mt-2 flex items-center gap-2 text-xs text-amber-700">
+            <span>
+              {rednessComparison === "increased"
+                ? "사진 분석 결과 직전보다 붉은기가 있어 보여요."
+                : "사진 분석 결과 직전보다 붉은기가 덜해 보여요."}
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                const delta = rednessComparison === "increased" ? 1 : -1;
+                setRednessLevel((v) => Math.max(0, Math.min(5, v + delta)));
+                setRednessComparison(null);
+              }}
+              className="rounded-full border border-amber-400 px-2 py-0.5 hover:bg-amber-50"
+            >
+              반영
+            </button>
+            <button
+              type="button"
+              onClick={() => setRednessComparison(null)}
+              className="text-neutral-400 underline"
+            >
+              무시
+            </button>
+          </div>
+        )}
       </Field>
 
       <Field label="각질 정도">
