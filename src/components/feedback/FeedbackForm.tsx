@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { submitFeedback } from "@/app/feedback/actions";
+import { SliderField } from "@/components/onboarding/primitives";
 import type { usageFeedback } from "@/db/schema";
 
 type ExistingFeedback = typeof usageFeedback.$inferSelect;
@@ -70,15 +71,12 @@ export function FeedbackForm({
         <label className="mb-1 block text-xs text-neutral-500">
           만족도 (1~5)
         </label>
-        <input
-          type="range"
+        <SliderField
           min={1}
           max={5}
           value={satisfactionScore}
-          onChange={(e) => setSatisfactionScore(Number(e.target.value))}
-          className="w-full accent-neutral-900"
+          onChange={setSatisfactionScore}
         />
-        <div className="text-xs text-neutral-500">{satisfactionScore}</div>
       </div>
 
       <div className="flex items-center gap-4">

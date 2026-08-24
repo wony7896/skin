@@ -172,8 +172,12 @@ export function SliderField({
         onChange={(e) => onChange(Number(e.target.value))}
         className="w-full accent-neutral-900"
       />
+      <div className="flex justify-between text-xs text-neutral-400">
+        <span>{min}</span>
+        <span>{max}</span>
+      </div>
       <div className="mt-1 text-sm text-neutral-500">
-        {formatValue ? formatValue(current) : current}
+        {formatValue ? formatValue(current) : `${current} / ${max}`}
       </div>
     </div>
   );

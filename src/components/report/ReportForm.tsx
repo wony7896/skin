@@ -7,6 +7,7 @@ import {
   type ImplicatedIngredient,
 } from "@/app/report/actions";
 import { PhotoUpload } from "@/components/photo/PhotoUpload";
+import { SliderField } from "@/components/onboarding/primitives";
 
 type Stage =
   | { step: "form" }
@@ -181,30 +182,20 @@ export function ReportForm({
         <label className="mb-2 block text-sm font-medium text-neutral-700">
           사용 후 며칠 만에 나타났나요?
         </label>
-        <input
-          type="range"
+        <SliderField
           min={0}
           max={14}
           value={onsetDays}
-          onChange={(e) => setOnsetDays(Number(e.target.value))}
-          className="w-full accent-neutral-900"
+          onChange={setOnsetDays}
+          formatValue={(v) => `${v}일`}
         />
-        <div className="mt-1 text-sm text-neutral-500">{onsetDays}일</div>
       </div>
 
       <div className="mb-5">
         <label className="mb-2 block text-sm font-medium text-neutral-700">
           강도 (1~5)
         </label>
-        <input
-          type="range"
-          min={1}
-          max={5}
-          value={severity}
-          onChange={(e) => setSeverity(Number(e.target.value))}
-          className="w-full accent-neutral-900"
-        />
-        <div className="mt-1 text-sm text-neutral-500">{severity}</div>
+        <SliderField min={1} max={5} value={severity} onChange={setSeverity} />
       </div>
 
       <div className="mb-5">
