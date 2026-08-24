@@ -13,7 +13,7 @@ import { createClient } from "@/lib/supabase/server";
 export default async function RecommendationsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ countries?: string }>;
+  searchParams: Promise<{ intl?: string }>;
 }) {
   const supabase = await createClient();
   const {
@@ -24,12 +24,12 @@ export default async function RecommendationsPage({
     redirect("/login");
   }
 
-  const { countries: countriesParam } = await searchParams;
-  const parsedCountries = countriesParam
-    ? countriesParam.split(",").filter(Boolean)
+  const { intl } = await searchParams;
+  const includeInternational = intl === "1";
+  // MVP 기본은 국내(KR)만, 토글로 해외(KR 외 전체)를 옵트인 — PRD 섹션 4 "국내 우선" 결정
+  const selectedCountries = includeInternational
+    ? AVAILABLE_COUNTRIES.map((c) => c.code)
     : ["KR"];
-  // 최소 1개 국가는 항상 선택돼 있어야 한다 (전부 해제 시 국내로 되돌림)
-  const selectedCountries = parsedCountries.length > 0 ? parsedCountries : ["KR"];
 
   const [latestProfile] = await db
     .select({ id: skinProfiles.id })
@@ -88,31 +88,16 @@ export default async function RecommendationsPage({
           제외 성분이 없는 제품 중에서, 설정하신 목표에 맞는 순서로 보여드려요.
         </p>
 
-        <div className="mb-8 flex gap-2">
-          {AVAILABLE_COUNTRIES.map((c) => {
-            const isActive = selectedCountries.includes(c.code);
-            const nextCountries = isActive
-              ? selectedCountries.filter((code) => code !== c.code)
-              : [...selectedCountries, c.code];
-            const href =
-              nextCountries.length > 0
-                ? `/recommendations?countries=${nextCountries.join(",")}`
-                : "/recommendations?countries=";
-            return (
-              <a
-                key={c.code}
-                href={href}
-                className={`rounded-full border px-3 py-1 text-xs ${
-                  isActive
-                    ? "border-neutral-900 bg-neutral-900 text-white"
-                    : "border-neutral-300 bg-white text-neutral-600"
-                }`}
-              >
-                {c.label}
-              </a>
-            );
-          })}
-        </div>
+        <a
+          href={includeInternational ? "/recommendations" : "/recommendations?intl=1"}
+          className={`mb-8 inline-block rounded-full border px-3 py-1 text-xs ${
+            includeInternational
+              ? "border-neutral-900 bg-neutral-900 text-white"
+              : "border-neutral-300 bg-white text-neutral-600"
+          }`}
+        >
+          {includeInternational ? "해외 제품 포함 중" : "해외 제품 포함해서 보기"}
+        </a>
 
         {resultsByCategory.map(({ category, results }) => (
           <section key={category} className="mb-8">
