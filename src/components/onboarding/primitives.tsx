@@ -177,7 +177,7 @@ export function SliderField({
         <span>{max}</span>
       </div>
       <div className="mt-1 text-sm text-neutral-500">
-        {formatValue ? formatValue(current) : `${current} / ${max}`}
+        {formatValue ? formatValue(current) : current}
       </div>
     </div>
   );
