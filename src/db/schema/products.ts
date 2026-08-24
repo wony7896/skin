@@ -8,13 +8,15 @@ import {
 import { productCategoryEnum } from "./enums";
 import { ingredients } from "./ingredients";
 
-// 국내 커머스(쿠팡·올리브영·무신사뷰티 등)에서 수집한 제품 (PRD 섹션 4 MVP 범위)
+// 국내 커머스(쿠팡·올리브영·무신사뷰티 등) + Phase 3부터 해외 채널(아마존·iHerb·YesStyle 등) 제품 (PRD 섹션 4, 8)
 export const products = pgTable("products", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull(),
   brand: text("brand"),
   category: productCategoryEnum("category").notNull(),
   retailer: text("retailer"),
+  // ISO 3166-1 alpha-2 국가 코드 (예: KR, US). 기존 국내 제품은 마이그레이션에서 'KR'로 채움
+  country: text("country").notNull().default("KR"),
   externalUrl: text("external_url").notNull(),
   barcode: text("barcode"),
   imageUrl: text("image_url"),

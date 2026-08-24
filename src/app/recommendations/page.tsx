@@ -3,13 +3,18 @@ import { redirect } from "next/navigation";
 import { db } from "@/db";
 import { recommendations, skinProfiles } from "@/db/schema";
 import {
+  AVAILABLE_COUNTRIES,
   CATEGORY_LABELS,
   CATEGORY_ORDER,
   getRecommendations,
 } from "@/lib/recommendation";
 import { createClient } from "@/lib/supabase/server";
 
-export default async function RecommendationsPage() {
+export default async function RecommendationsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ countries?: string }>;
+}) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -18,6 +23,13 @@ export default async function RecommendationsPage() {
   if (!user) {
     redirect("/login");
   }
+
+  const { countries: countriesParam } = await searchParams;
+  const parsedCountries = countriesParam
+    ? countriesParam.split(",").filter(Boolean)
+    : ["KR"];
+  // 최소 1개 국가는 항상 선택돼 있어야 한다 (전부 해제 시 국내로 되돌림)
+  const selectedCountries = parsedCountries.length > 0 ? parsedCountries : ["KR"];
 
   const [latestProfile] = await db
     .select({ id: skinProfiles.id })
@@ -41,7 +53,11 @@ export default async function RecommendationsPage() {
 
   const resultsByCategory = await Promise.all(
     CATEGORY_ORDER.map(async (category) => {
-      const results = await getRecommendations(user.id, category);
+      const results = await getRecommendations(
+        user.id,
+        category,
+        selectedCountries,
+      );
       const top = results.slice(0, 3);
 
       if (top.length > 0) {
@@ -68,9 +84,35 @@ export default async function RecommendationsPage() {
         <h1 className="mb-2 text-xl font-semibold text-neutral-900">
           맞춤 추천
         </h1>
-        <p className="mb-8 text-sm text-neutral-500">
+        <p className="mb-4 text-sm text-neutral-500">
           제외 성분이 없는 제품 중에서, 설정하신 목표에 맞는 순서로 보여드려요.
         </p>
+
+        <div className="mb-8 flex gap-2">
+          {AVAILABLE_COUNTRIES.map((c) => {
+            const isActive = selectedCountries.includes(c.code);
+            const nextCountries = isActive
+              ? selectedCountries.filter((code) => code !== c.code)
+              : [...selectedCountries, c.code];
+            const href =
+              nextCountries.length > 0
+                ? `/recommendations?countries=${nextCountries.join(",")}`
+                : "/recommendations?countries=";
+            return (
+              <a
+                key={c.code}
+                href={href}
+                className={`rounded-full border px-3 py-1 text-xs ${
+                  isActive
+                    ? "border-neutral-900 bg-neutral-900 text-white"
+                    : "border-neutral-300 bg-white text-neutral-600"
+                }`}
+              >
+                {c.label}
+              </a>
+            );
+          })}
+        </div>
 
         {resultsByCategory.map(({ category, results }) => (
           <section key={category} className="mb-8">
@@ -91,6 +133,12 @@ export default async function RecommendationsPage() {
                     <div className="flex items-center justify-between">
                       <span className="font-medium text-neutral-900">
                         {product.name}
+                        {product.country !== "KR" && (
+                          <span className="ml-2 rounded bg-neutral-100 px-1.5 py-0.5 text-xs text-neutral-500">
+                            {product.country}
+                            {product.retailer ? ` · ${product.retailer}` : ""}
+                          </span>
+                        )}
                       </span>
                       <a
                         href={product.externalUrl}

@@ -1,4 +1,4 @@
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq, inArray } from "drizzle-orm";
 import { db } from "@/db";
 import {
   excludedIngredients,
@@ -44,13 +44,19 @@ export type ScoredProduct = {
   name: string;
   brand: string | null;
   externalUrl: string;
+  country: string;
+  retailer: string | null;
   score: number;
   reasons: string[];
 };
 
+// MVP 기본값은 국내(KR)로 한정한다 (PRD 섹션 4 "권장" 결정). Phase 3부터 countries로 해외 채널을 옵트인.
+const DEFAULT_COUNTRIES = ["KR"];
+
 export async function getRecommendations(
   userId: string,
   category: ProductCategory,
+  countries: string[] = DEFAULT_COUNTRIES,
 ): Promise<ScoredProduct[]> {
   const [latestProfile] = await db
     .select({
@@ -84,6 +90,8 @@ export async function getRecommendations(
       name: products.name,
       brand: products.brand,
       externalUrl: products.externalUrl,
+      country: products.country,
+      retailer: products.retailer,
       inciName: ingredients.inciName,
       koreanName: ingredients.koreanName,
       ingredientId: ingredients.id,
@@ -91,7 +99,12 @@ export async function getRecommendations(
     .from(products)
     .leftJoin(productIngredients, eq(productIngredients.productId, products.id))
     .leftJoin(ingredients, eq(ingredients.id, productIngredients.ingredientId))
-    .where(eq(products.category, category));
+    .where(
+      and(
+        eq(products.category, category),
+        inArray(products.country, countries),
+      ),
+    );
 
   const byProduct = new Map<
     string,
@@ -99,6 +112,8 @@ export async function getRecommendations(
       name: string;
       brand: string | null;
       externalUrl: string;
+      country: string;
+      retailer: string | null;
       ingredientIds: Set<string>;
       inciNames: Set<string>;
       koreanNames: Map<string, string | null>;
@@ -111,6 +126,8 @@ export async function getRecommendations(
         name: row.name,
         brand: row.brand,
         externalUrl: row.externalUrl,
+        country: row.country,
+        retailer: row.retailer,
         ingredientIds: new Set(),
         inciNames: new Set(),
         koreanNames: new Map(),
@@ -181,6 +198,8 @@ export async function getRecommendations(
       name: product.name,
       brand: product.brand,
       externalUrl: product.externalUrl,
+      country: product.country,
+      retailer: product.retailer,
       score,
       reasons,
     });
@@ -188,6 +207,13 @@ export async function getRecommendations(
 
   return scored.sort((a, b) => b.score - a.score);
 }
+
+// PRD 섹션 4: MVP는 국내(KR) 한정, Phase 3부터 성분 표기가 비교적 명확한 채널(iHerb 등)의
+// 미국(US) 제품을 국가 필터로 옵트인. 새 국가를 열 때마다 여기에 추가한다.
+export const AVAILABLE_COUNTRIES: { code: string; label: string }[] = [
+  { code: "KR", label: "국내" },
+  { code: "US", label: "미국" },
+];
 
 export const GOAL_LABELS: Record<SkinGoal, string> = {
   brightening: "미백 · 톤업",
