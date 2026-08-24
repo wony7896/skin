@@ -130,30 +130,39 @@ export default async function RecommendationsPage({
                     key={product.productId}
                     className="rounded-lg border border-neutral-200 bg-white p-4"
                   >
-                    <div className="flex items-center justify-between">
-                      <span className="font-medium text-neutral-900">
-                        {product.name}
-                        {product.country !== "KR" && (
-                          <span className="ml-2 rounded bg-neutral-100 px-1.5 py-0.5 text-xs text-neutral-500">
-                            {product.country}
-                            {product.retailer ? ` · ${product.retailer}` : ""}
-                          </span>
+                    <a
+                      href={product.externalUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex gap-3"
+                    >
+                      {product.imageUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={product.imageUrl}
+                          alt={product.name}
+                          className="h-16 w-16 shrink-0 rounded-md object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-md bg-neutral-100 text-xs text-neutral-400">
+                          사진 없음
+                        </div>
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate font-medium text-neutral-900">
+                          {product.name}
+                        </p>
+                        <p className="text-xs text-neutral-500">
+                          {product.retailer ?? "판매처 정보 없음"}
+                          {product.country !== "KR" && ` · ${product.country}`}
+                        </p>
+                        {product.reasons.length > 0 && (
+                          <p className="mt-1 text-xs text-neutral-500">
+                            {product.reasons.join(" · ")}
+                          </p>
                         )}
-                      </span>
-                      <a
-                        href={product.externalUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-sm text-neutral-500 underline"
-                      >
-                        보러가기
-                      </a>
-                    </div>
-                    {product.reasons.length > 0 && (
-                      <p className="mt-1 text-xs text-neutral-500">
-                        {product.reasons.join(" · ")}
-                      </p>
-                    )}
+                      </div>
+                    </a>
                   </li>
                 ))}
               </ul>

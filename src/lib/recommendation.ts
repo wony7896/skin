@@ -44,6 +44,7 @@ export type ScoredProduct = {
   name: string;
   brand: string | null;
   externalUrl: string;
+  imageUrl: string | null;
   country: string;
   retailer: string | null;
   score: number;
@@ -90,6 +91,7 @@ export async function getRecommendations(
       name: products.name,
       brand: products.brand,
       externalUrl: products.externalUrl,
+      imageUrl: products.imageUrl,
       country: products.country,
       retailer: products.retailer,
       inciName: ingredients.inciName,
@@ -112,6 +114,7 @@ export async function getRecommendations(
       name: string;
       brand: string | null;
       externalUrl: string;
+      imageUrl: string | null;
       country: string;
       retailer: string | null;
       ingredientIds: Set<string>;
@@ -126,6 +129,7 @@ export async function getRecommendations(
         name: row.name,
         brand: row.brand,
         externalUrl: row.externalUrl,
+        imageUrl: row.imageUrl,
         country: row.country,
         retailer: row.retailer,
         ingredientIds: new Set(),
@@ -198,6 +202,7 @@ export async function getRecommendations(
       name: product.name,
       brand: product.brand,
       externalUrl: product.externalUrl,
+      imageUrl: product.imageUrl,
       country: product.country,
       retailer: product.retailer,
       score,
