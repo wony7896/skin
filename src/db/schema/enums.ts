@@ -50,3 +50,13 @@ export const pregnancyStatusEnum = pgEnum("pregnancy_status", [
   "pregnant",
   "breastfeeding",
 ]);
+
+// 취향(향·제형) — 제품의 실제 속성과 사용자의 선호를 같은 값 집합으로 매칭한다.
+// 사용자 쪽 컬럼은 nullable로 두고 null = "무관"으로 취급한다.
+export const fragranceLevelEnum = pgEnum("fragrance_level", [
+  "none",
+  "light",
+  "strong",
+]);
+
+export const textureEnum = pgEnum("texture", ["light", "medium", "rich"]);

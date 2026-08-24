@@ -12,12 +12,14 @@ import {
 } from "drizzle-orm/pg-core";
 import { authUsers } from "./auth";
 import {
+  fragranceLevelEnum,
   ingredientStatusEnum,
   inputMethodEnum,
   pregnancyStatusEnum,
   profileSourceEnum,
   reportSourceEnum,
   skinGoalEnum,
+  textureEnum,
 } from "./enums";
 import { ingredients, medications } from "./ingredients";
 import { products } from "./products";
@@ -93,6 +95,11 @@ export const skinProfiles = pgTable("skin_profiles", {
   // F. 스킨케어 목표 — 다중선택 + 우선순위(배열 앞쪽일수록 우선)
   goals: skinGoalEnum("goals").array(),
   goalPriority: skinGoalEnum("goal_priority").array(),
+
+  // G. 사용감 취향 — null은 "무관"으로 취급. products의 동일 축과 매칭해 추천 점수에 반영
+  fragrancePreference: fragranceLevelEnum("fragrance_preference"),
+  texturePreference: textureEnum("texture_preference"),
+  prefersColorFree: boolean("prefers_color_free"),
 
   // 체크인 전용 필드 (섹션 1-②) — 온보딩의 BSTI 점수보다 가벼운 슬라이더 3종
   troubleAreas: text("trouble_areas").array(),

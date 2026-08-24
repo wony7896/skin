@@ -8,6 +8,7 @@ import { StepC } from "./StepC";
 import { StepD } from "./StepD";
 import { StepE } from "./StepE";
 import { StepF } from "./StepF";
+import { StepG } from "./StepG";
 import { emptyOnboardingData, type OnboardingData } from "./types";
 
 const STEPS = [
@@ -17,6 +18,7 @@ const STEPS = [
   { key: "D", label: "생활 환경", Component: StepD },
   { key: "E", label: "현재 루틴", Component: StepE },
   { key: "F", label: "목표", Component: StepF },
+  { key: "G", label: "취향", Component: StepG },
 ] as const;
 
 export function OnboardingWizard() {

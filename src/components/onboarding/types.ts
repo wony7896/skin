@@ -48,6 +48,11 @@ export type OnboardingData = {
   // F. 스킨케어 목표
   goals: SkinGoal[];
   goalPriority: SkinGoal[];
+
+  // G. 사용감 취향 — null은 "무관"
+  fragrancePreference: "none" | "light" | "strong" | null;
+  texturePreference: "light" | "medium" | "rich" | null;
+  prefersColorFree: boolean | null;
 };
 
 export const emptyOnboardingData: OnboardingData = {
@@ -77,6 +82,10 @@ export const emptyOnboardingData: OnboardingData = {
 
   goals: [],
   goalPriority: [],
+
+  fragrancePreference: null,
+  texturePreference: null,
+  prefersColorFree: null,
 };
 
 export const PREGNANCY_STATUS_OPTIONS = [
@@ -89,6 +98,31 @@ export const PREGNANCY_STATUS_LABELS: Record<string, string> = {
   none: "해당 없음",
   pregnant: "임신 중",
   breastfeeding: "수유 중",
+};
+
+export const FRAGRANCE_LEVEL_OPTIONS = ["any", "none", "light", "strong"] as const;
+
+export const FRAGRANCE_LEVEL_LABELS: Record<string, string> = {
+  any: "무관",
+  none: "무향 선호",
+  light: "은은한 향 선호",
+  strong: "향 뚜렷해도 좋음",
+};
+
+export const TEXTURE_OPTIONS = ["any", "light", "medium", "rich"] as const;
+
+export const TEXTURE_LABELS: Record<string, string> = {
+  any: "무관",
+  light: "가벼운 워터/젤 타입",
+  medium: "적당한 로션 타입",
+  rich: "묵직한 크림 타입",
+};
+
+export const COLOR_FREE_OPTIONS = ["any", "colorfree"] as const;
+
+export const COLOR_FREE_LABELS: Record<string, string> = {
+  any: "무관",
+  colorfree: "무착색 제품 선호",
 };
 
 export const DIAGNOSED_CONDITIONS = [

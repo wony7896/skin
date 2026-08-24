@@ -44,6 +44,9 @@ export async function submitOnboarding(data: OnboardingData) {
         : null,
       goals: data.goals,
       goalPriority: data.goalPriority,
+      fragrancePreference: data.fragrancePreference,
+      texturePreference: data.texturePreference,
+      prefersColorFree: data.prefersColorFree,
     })
     .returning({ id: skinProfiles.id });
 

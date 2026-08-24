@@ -69,6 +69,9 @@ export async function submitCheckin(input: {
     isSmoker: baseline.isSmoker,
     currentRoutineProducts: baseline.currentRoutineProducts,
     lastNewProductAt: baseline.lastNewProductAt,
+    fragrancePreference: baseline.fragrancePreference,
+    texturePreference: baseline.texturePreference,
+    prefersColorFree: baseline.prefersColorFree,
 
     // 이번 체크인에서 실제로 갱신하는 필드
     oilyDryScore: input.oilyDryScore,

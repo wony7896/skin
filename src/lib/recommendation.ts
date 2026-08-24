@@ -51,8 +51,23 @@ export type ScoredProduct = {
   imageUrl: string | null;
   country: string;
   retailer: string | null;
+  fragranceLevel: "none" | "light" | "strong";
+  texture: "light" | "medium" | "rich";
+  colorFree: boolean;
   score: number;
   reasons: string[];
+};
+
+const FRAGRANCE_LEVEL_KO: Record<"none" | "light" | "strong", string> = {
+  none: "무향",
+  light: "은은한 향",
+  strong: "뚜렷한 향",
+};
+
+const TEXTURE_KO: Record<"light" | "medium" | "rich", string> = {
+  light: "가벼운 워터/젤",
+  medium: "적당한 로션",
+  rich: "묵직한 크림",
 };
 
 // MVP 기본값은 국내(KR)로 한정한다 (PRD 섹션 4 "권장" 결정). Phase 3부터 countries로 해외 채널을 옵트인.
@@ -70,6 +85,9 @@ export async function getRecommendations(
       diagnosedConditions: skinProfiles.diagnosedConditions,
       pastReactions: skinProfiles.pastReactions,
       pregnancyStatus: skinProfiles.pregnancyStatus,
+      fragrancePreference: skinProfiles.fragrancePreference,
+      texturePreference: skinProfiles.texturePreference,
+      prefersColorFree: skinProfiles.prefersColorFree,
     })
     .from(skinProfiles)
     .where(eq(skinProfiles.userId, userId))
@@ -86,6 +104,9 @@ export async function getRecommendations(
   const isPregnantOrBreastfeeding =
     latestProfile?.pregnancyStatus === "pregnant" ||
     latestProfile?.pregnancyStatus === "breastfeeding";
+  const fragrancePreference = latestProfile?.fragrancePreference ?? null;
+  const texturePreference = latestProfile?.texturePreference ?? null;
+  const prefersColorFree = latestProfile?.prefersColorFree ?? false;
 
   const excluded = await db
     .select({ ingredientId: excludedIngredients.ingredientId })
@@ -110,6 +131,9 @@ export async function getRecommendations(
       imageUrl: products.imageUrl,
       country: products.country,
       retailer: products.retailer,
+      fragranceLevel: products.fragranceLevel,
+      texture: products.texture,
+      colorFree: products.colorFree,
       inciName: ingredients.inciName,
       koreanName: ingredients.koreanName,
       ingredientId: ingredients.id,
@@ -133,6 +157,9 @@ export async function getRecommendations(
       imageUrl: string | null;
       country: string;
       retailer: string | null;
+      fragranceLevel: "none" | "light" | "strong";
+      texture: "light" | "medium" | "rich";
+      colorFree: boolean;
       ingredientIds: Set<string>;
       inciNames: Set<string>;
       koreanNames: Map<string, string | null>;
@@ -148,6 +175,9 @@ export async function getRecommendations(
         imageUrl: row.imageUrl,
         country: row.country,
         retailer: row.retailer,
+        fragranceLevel: row.fragranceLevel,
+        texture: row.texture,
+        colorFree: row.colorFree,
         ingredientIds: new Set(),
         inciNames: new Set(),
         koreanNames: new Map(),
@@ -213,6 +243,43 @@ export async function getRecommendations(
       }
     }
 
+    // ③ 취향 적합도 — G단계 사용감 선호와 제품 실측 속성 매칭
+    if (fragrancePreference) {
+      if (product.fragranceLevel === fragrancePreference) {
+        score += 8;
+        reasons.push(`선호하는 향 강도(${FRAGRANCE_LEVEL_KO[fragrancePreference]})와 일치`);
+      } else if (
+        (fragrancePreference === "none" && product.fragranceLevel === "strong") ||
+        (fragrancePreference === "strong" && product.fragranceLevel === "none")
+      ) {
+        score -= 8;
+        reasons.push("선호하는 향 강도와 정반대");
+      }
+    }
+
+    if (texturePreference) {
+      if (product.texture === texturePreference) {
+        score += 5;
+        reasons.push(`선호하는 제형(${TEXTURE_KO[texturePreference]})과 일치`);
+      } else if (
+        (texturePreference === "light" && product.texture === "rich") ||
+        (texturePreference === "rich" && product.texture === "light")
+      ) {
+        score -= 5;
+        reasons.push("선호하는 제형과 정반대");
+      }
+    }
+
+    if (prefersColorFree) {
+      if (product.colorFree) {
+        score += 5;
+        reasons.push("무착색 선호와 일치");
+      } else {
+        score -= 5;
+        reasons.push("착색 성분 포함 — 무착색 선호와 불일치");
+      }
+    }
+
     scored.push({
       productId,
       name: product.name,
@@ -221,6 +288,9 @@ export async function getRecommendations(
       imageUrl: product.imageUrl,
       country: product.country,
       retailer: product.retailer,
+      fragranceLevel: product.fragranceLevel,
+      texture: product.texture,
+      colorFree: product.colorFree,
       score,
       reasons,
     });

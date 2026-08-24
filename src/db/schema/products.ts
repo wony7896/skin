@@ -1,11 +1,12 @@
 import {
+  boolean,
   integer,
   pgTable,
   text,
   timestamp,
   uuid,
 } from "drizzle-orm/pg-core";
-import { productCategoryEnum } from "./enums";
+import { fragranceLevelEnum, productCategoryEnum, textureEnum } from "./enums";
 import { ingredients } from "./ingredients";
 
 // 국내 커머스(쿠팡·올리브영·무신사뷰티 등) + Phase 3부터 해외 채널(아마존·iHerb·YesStyle 등) 제품 (PRD 섹션 4, 8)
@@ -20,6 +21,10 @@ export const products = pgTable("products", {
   externalUrl: text("external_url").notNull(),
   barcode: text("barcode"),
   imageUrl: text("image_url"),
+  // 취향 매칭용 실제 제품 속성 (PRD 섹션 1-F 취향 문항과 짝을 이룸)
+  fragranceLevel: fragranceLevelEnum("fragrance_level").notNull().default("light"),
+  texture: textureEnum("texture").notNull().default("medium"),
+  colorFree: boolean("color_free").notNull().default(true),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
