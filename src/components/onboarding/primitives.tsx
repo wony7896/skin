@@ -173,11 +173,8 @@ export function SliderField({
         className="w-full accent-neutral-900"
       />
       <div className="flex justify-between text-xs text-neutral-400">
-        <span>{min}</span>
-        <span>{max}</span>
-      </div>
-      <div className="mt-1 text-sm text-neutral-500">
-        {formatValue ? formatValue(current) : current}
+        <span>{formatValue ? formatValue(min) : min}</span>
+        <span>{formatValue ? formatValue(max) : max}</span>
       </div>
     </div>
   );
