@@ -43,3 +43,10 @@ export const consentTypeEnum = pgEnum("consent_type", [
   "sensitive_health_info", // 피부질환 이력·복용 약물·알레르기 정보
   "biometric_photo", // 얼굴 클로즈업 사진 기반 분석
 ]);
+
+// PRD 섹션 9: 배합 결정에 직접 영향을 주는 임신·수유 여부 (레티놀·살리실산 등 금기/주의 성분 필터링에 사용)
+export const pregnancyStatusEnum = pgEnum("pregnancy_status", [
+  "none",
+  "pregnant",
+  "breastfeeding",
+]);

@@ -1,4 +1,4 @@
-import type { RoutineProductEntry } from "@/db/schema/profiles";
+import type { PastReactionEntry, RoutineProductEntry } from "@/db/schema/profiles";
 
 export type SkinGoal =
   | "brightening"
@@ -26,10 +26,10 @@ export type OnboardingData = {
   diagnosedConditions: string[];
   recentProcedures: string;
   medications: { freeTextName: string }[];
+  pregnancyStatus: "none" | "pregnant" | "breastfeeding" | null;
 
   // C. 알레르기·트러블 유발 성분
-  reactionTypes: string[];
-  suspectedProductNames: string[];
+  pastReactions: PastReactionEntry[];
   hadPatchTest: boolean | null;
   atopicFamilyHistory: boolean | null;
 
@@ -59,9 +59,9 @@ export const emptyOnboardingData: OnboardingData = {
   diagnosedConditions: [],
   recentProcedures: "",
   medications: [],
+  pregnancyStatus: null,
 
-  reactionTypes: [],
-  suspectedProductNames: [],
+  pastReactions: [],
   hadPatchTest: null,
   atopicFamilyHistory: null,
 
@@ -77,6 +77,18 @@ export const emptyOnboardingData: OnboardingData = {
 
   goals: [],
   goalPriority: [],
+};
+
+export const PREGNANCY_STATUS_OPTIONS = [
+  "none",
+  "pregnant",
+  "breastfeeding",
+] as const;
+
+export const PREGNANCY_STATUS_LABELS: Record<string, string> = {
+  none: "해당 없음",
+  pregnant: "임신 중",
+  breastfeeding: "수유 중",
 };
 
 export const DIAGNOSED_CONDITIONS = [

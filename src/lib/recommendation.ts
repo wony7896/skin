@@ -36,6 +36,10 @@ const GOAL_INGREDIENTS: Record<SkinGoal, string[]> = {
 const MILD_SURFACTANTS = ["Sodium Cocoyl Isethionate", "Cocamidopropyl Betaine"];
 const HARSH_SURFACTANTS = ["Sodium Lauryl Sulfate", "Sodium Laureth Sulfate"];
 
+// PRD 섹션 9: 임신·수유 중 흔히 주의가 권고되는 성분 — 일반적인 스킨케어 가이드라인 수준의
+// 참고 목록이며, 실제 배합 단계에서는 전문가 검증이 필요하다.
+const PREGNANCY_CAUTION_INGREDIENTS = ["Retinol", "Salicylic Acid"];
+
 const GOAL_PRIORITY_WEIGHT = [3, 2]; // 1순위, 2순위
 const GOAL_SECONDARY_WEIGHT = 1; // 우선순위엔 없지만 관심 목표로 고른 것
 
@@ -64,7 +68,8 @@ export async function getRecommendations(
       goals: skinProfiles.goals,
       goalPriority: skinProfiles.goalPriority,
       diagnosedConditions: skinProfiles.diagnosedConditions,
-      reactionTypes: skinProfiles.reactionTypes,
+      pastReactions: skinProfiles.pastReactions,
+      pregnancyStatus: skinProfiles.pregnancyStatus,
     })
     .from(skinProfiles)
     .where(eq(skinProfiles.userId, userId))
@@ -74,16 +79,27 @@ export async function getRecommendations(
   const goals = (latestProfile?.goals ?? []) as SkinGoal[];
   const goalPriority = (latestProfile?.goalPriority ?? []) as SkinGoal[];
   const isSensitive =
-    (latestProfile?.reactionTypes?.length ?? 0) > 0 ||
+    (latestProfile?.pastReactions?.length ?? 0) > 0 ||
     (latestProfile?.diagnosedConditions ?? []).some((c) =>
       ["atopic_dermatitis", "rosacea"].includes(c),
     );
+  const isPregnantOrBreastfeeding =
+    latestProfile?.pregnancyStatus === "pregnant" ||
+    latestProfile?.pregnancyStatus === "breastfeeding";
 
   const excluded = await db
     .select({ ingredientId: excludedIngredients.ingredientId })
     .from(excludedIngredients)
     .where(eq(excludedIngredients.userId, userId));
   const excludedIds = new Set(excluded.map((e) => e.ingredientId));
+
+  if (isPregnantOrBreastfeeding) {
+    const cautionRows = await db
+      .select({ id: ingredients.id })
+      .from(ingredients)
+      .where(inArray(ingredients.inciName, PREGNANCY_CAUTION_INGREDIENTS));
+    for (const row of cautionRows) excludedIds.add(row.id);
+  }
 
   const rows = await db
     .select({

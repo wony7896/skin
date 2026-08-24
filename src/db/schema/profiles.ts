@@ -14,6 +14,7 @@ import { authUsers } from "./auth";
 import {
   ingredientStatusEnum,
   inputMethodEnum,
+  pregnancyStatusEnum,
   profileSourceEnum,
   reportSourceEnum,
   skinGoalEnum,
@@ -26,6 +27,15 @@ export type RoutineProductEntry = {
   category: string;
   productName: string;
   frequency: string;
+};
+
+// C. 과거 반응 이력 — 제품 단위(성분 역추적 파이프라인 도입 전까지는 자유 입력) + 반응 유형·강도·패치테스트
+// 여부를 하나의 사건으로 묶어 구조화한다. severity>=4 또는 두드러기 포함 시 피부과 상담 권유 분기의 트리거로 쓴다.
+export type PastReactionEntry = {
+  productName: string;
+  reactionTypes: string[];
+  severity: number;
+  wasPatchTested: boolean;
 };
 
 // 진단마다 생성되는 스냅샷(버전이 있는 시계열) — 이전 스냅샷과 비교해 변화량 계산 (PRD 섹션 2)
@@ -59,11 +69,12 @@ export const skinProfiles = pgTable("skin_profiles", {
   diagnosedConditions: text("diagnosed_conditions").array(),
   recentProcedures: text("recent_procedures"),
 
-  // C. 알레르기·트러블 유발 성분 (제품→성분 역추적 파이프라인 도입 전까지 제품명은 자유 입력)
-  reactionTypes: text("reaction_types").array(),
-  suspectedProductNames: text("suspected_product_names").array(),
+  // C. 알레르기·트러블 유발 성분
+  pastReactions: jsonb("past_reactions").$type<PastReactionEntry[]>(),
   hadPatchTest: boolean("had_patch_test"),
   atopicFamilyHistory: boolean("atopic_family_history"),
+  // 임신·수유 여부 — 레티놀·살리실산 등 배합 금기/주의 성분 필터링에 사용 (PRD 섹션 9)
+  pregnancyStatus: pregnancyStatusEnum("pregnancy_status"),
 
   // D. 생활·환경 요인
   humidityRegion: text("humidity_region"),

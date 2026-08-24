@@ -26,9 +26,9 @@ export async function submitOnboarding(data: OnboardingData) {
       oilinessVisual: data.oilinessVisual,
       diagnosedConditions: data.diagnosedConditions,
       recentProcedures: data.recentProcedures || null,
-      reactionTypes: data.reactionTypes,
-      suspectedProductNames: data.suspectedProductNames.filter(
-        (name) => name.trim() !== "",
+      pregnancyStatus: data.pregnancyStatus,
+      pastReactions: data.pastReactions.filter(
+        (entry) => entry.productName.trim() !== "",
       ),
       hadPatchTest: data.hadPatchTest,
       atopicFamilyHistory: data.atopicFamilyHistory,

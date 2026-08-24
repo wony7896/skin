@@ -1,9 +1,11 @@
 "use client";
 
-import { Field, ChipGroup, StepHeading } from "./primitives";
+import { Field, ChipGroup, RadioPills, StepHeading } from "./primitives";
 import {
   DIAGNOSED_CONDITIONS,
   DIAGNOSED_CONDITION_LABELS,
+  PREGNANCY_STATUS_LABELS,
+  PREGNANCY_STATUS_OPTIONS,
   type OnboardingData,
 } from "./types";
 
@@ -82,6 +84,19 @@ export function StepB({
           className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm"
           rows={2}
         />
+      </Field>
+
+      <Field label="임신·수유 여부">
+        <RadioPills
+          options={PREGNANCY_STATUS_OPTIONS}
+          labels={PREGNANCY_STATUS_LABELS}
+          value={data.pregnancyStatus}
+          onChange={(v) => update({ pregnancyStatus: v })}
+        />
+        <p className="mt-1 text-xs text-neutral-400">
+          레티놀·살리실산 등 일부 성분은 임신·수유 중 주의가 필요해서,
+          추천에서 자동으로 제외해드리기 위해 여쭤봐요.
+        </p>
       </Field>
     </div>
   );

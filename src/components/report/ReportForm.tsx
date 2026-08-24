@@ -8,6 +8,8 @@ import {
 } from "@/app/report/actions";
 import { PhotoUpload } from "@/components/photo/PhotoUpload";
 import { SliderField } from "@/components/onboarding/primitives";
+import { DermatologistAdvisory } from "@/components/safety/DermatologistAdvisory";
+import { needsDermatologistAdvisory } from "@/lib/safety";
 
 type Stage =
   | { step: "form" }
@@ -199,6 +201,10 @@ export function ReportForm({
         </label>
         <SliderField min={1} max={5} value={severity} onChange={setSeverity} />
       </div>
+
+      {needsDermatologistAdvisory({ severity, reactionTypes: [] }) && (
+        <DermatologistAdvisory />
+      )}
 
       <div className="mb-5">
         <label className="mb-2 block text-sm font-medium text-neutral-700">
