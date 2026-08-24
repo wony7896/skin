@@ -40,7 +40,7 @@ export function CheckinForm({ baseline }: { baseline: Baseline }) {
   const [sleepHours, setSleepHours] = useState(
     Number(baseline.sleepHours ?? 6),
   );
-  const [stressLevel, setStressLevel] = useState(baseline.stressLevel ?? 3);
+  const [stressLevel, setStressLevel] = useState(baseline.stressLevel ?? 5);
   const [menstrualCycleChange, setMenstrualCycleChange] = useState("");
 
   const baselineGoals = baseline.goals as SkinGoal[];
@@ -257,8 +257,8 @@ export function CheckinForm({ baseline }: { baseline: Baseline }) {
         <SliderField min={0} max={12} value={sleepHours} onChange={setSleepHours} />
       </Field>
 
-      <Field label="평소 스트레스 정도 (1~5)">
-        <SliderField min={1} max={5} value={stressLevel} onChange={setStressLevel} />
+      <Field label="평소 스트레스 정도 (0~10)">
+        <SliderField min={0} max={10} value={stressLevel} onChange={setStressLevel} />
       </Field>
 
       <Field label="생리주기 변화 (해당 시)">

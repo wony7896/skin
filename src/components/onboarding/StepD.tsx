@@ -57,10 +57,10 @@ export function StepD({
         />
       </Field>
 
-      <Field label="평소 스트레스 정도 (1~5)">
+      <Field label="평소 스트레스 정도 (0~10)">
         <SliderField
-          min={1}
-          max={5}
+          min={0}
+          max={10}
           value={data.stressLevel}
           onChange={(v) => update({ stressLevel: v })}
         />
