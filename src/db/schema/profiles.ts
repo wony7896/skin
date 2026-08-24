@@ -54,18 +54,8 @@ export const skinProfiles = pgTable("skin_profiles", {
   poreSize: text("pore_size"),
   oilinessVisual: text("oiliness_visual"),
 
-  // BSTI 4축 (유분/건성 · 민감/저항성 · 색소침착 경향 · 탄력/주름) — 0~100 점수
+  // 유분/건성 슬라이더 — 체크인에서 매회 갱신 (0~100)
   oilyDryScore: smallint("oily_dry_score"),
-  sensitiveResistantScore: smallint("sensitive_resistant_score"),
-  pigmentationScore: smallint("pigmentation_score"),
-  wrinkleScore: smallint("wrinkle_score"),
-
-  // Fitzpatrick 간이화
-  uvReactionType: text("uv_reaction_type"),
-
-  // 여드름/아토피 중증도 (IGA, POEM 참고)
-  acneSeverity: text("acne_severity"),
-  eczemaPoemScore: smallint("eczema_poem_score"),
 
   // B. 피부 질환 병력 (약물은 별도 user_medications 테이블)
   diagnosedConditions: text("diagnosed_conditions").array(),

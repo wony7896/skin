@@ -43,6 +43,23 @@ const PREGNANCY_CAUTION_INGREDIENTS = ["Retinol", "Salicylic Acid"];
 const GOAL_PRIORITY_WEIGHT = [3, 2]; // 1순위, 2순위
 const GOAL_SECONDARY_WEIGHT = 1; // 우선순위엔 없지만 관심 목표로 고른 것
 
+// 전성분표 표기 순서는 법적으로 함량 내림차순이라, 표기 위치(순번/전체 개수)로 대략적인
+// 함량 구간을 추정한다. 같은 액티브라도 1번째로 적힌 제품과 트레이스량으로 마지막 즈음
+// 적힌 제품은 실제 효과 기대치가 다르므로 목표 적합도 점수에 반영한다.
+function concentrationMultiplier(position: number, total: number): number {
+  if (total <= 0) return 1;
+  const ratio = position / total;
+  if (ratio <= 0.3) return 1;
+  if (ratio <= 0.6) return 0.6;
+  return 0.3;
+}
+
+function concentrationNote(multiplier: number): string {
+  if (multiplier === 1) return "";
+  if (multiplier === 0.6) return " (중간 함량 추정)";
+  return " (트레이스 함량 추정)";
+}
+
 export type ScoredProduct = {
   productId: string;
   name: string;
@@ -137,6 +154,7 @@ export async function getRecommendations(
       inciName: ingredients.inciName,
       koreanName: ingredients.koreanName,
       ingredientId: ingredients.id,
+      position: productIngredients.position,
     })
     .from(products)
     .leftJoin(productIngredients, eq(productIngredients.productId, products.id))
@@ -163,6 +181,8 @@ export async function getRecommendations(
       ingredientIds: Set<string>;
       inciNames: Set<string>;
       koreanNames: Map<string, string | null>;
+      positions: Map<string, number>;
+      totalIngredients: number;
     }
   >();
 
@@ -181,6 +201,8 @@ export async function getRecommendations(
         ingredientIds: new Set(),
         inciNames: new Set(),
         koreanNames: new Map(),
+        positions: new Map(),
+        totalIngredients: 0,
       });
     }
     const entry = byProduct.get(row.productId)!;
@@ -188,6 +210,8 @@ export async function getRecommendations(
       entry.ingredientIds.add(row.ingredientId);
       entry.inciNames.add(row.inciName!);
       entry.koreanNames.set(row.inciName!, row.koreanName);
+      entry.positions.set(row.inciName!, row.position!);
+      entry.totalIngredients += 1;
     }
   }
 
@@ -215,9 +239,19 @@ export async function getRecommendations(
         product.inciNames.has(inci),
       );
       if (matchedIngredients.length > 0) {
-        score += weight * 10;
-        const label = product.koreanNames.get(matchedIngredients[0]) ?? matchedIngredients[0];
-        reasons.push(`목표(${GOAL_LABELS[goal]})에 맞는 ${label} 함유`);
+        // 매칭된 액티브 중 표기 순서가 가장 앞선(=고농도 추정) 성분을 대표로 채택
+        const bestInci = matchedIngredients.reduce((best, cur) => {
+          const curPos = product.positions.get(cur) ?? Infinity;
+          const bestPos = product.positions.get(best) ?? Infinity;
+          return curPos < bestPos ? cur : best;
+        });
+        const position = product.positions.get(bestInci) ?? product.totalIngredients;
+        const multiplier = concentrationMultiplier(position, product.totalIngredients);
+        score += weight * 10 * multiplier;
+        const label = product.koreanNames.get(bestInci) ?? bestInci;
+        reasons.push(
+          `목표(${GOAL_LABELS[goal]})에 맞는 ${label} 함유${concentrationNote(multiplier)}`,
+        );
       }
     }
 
