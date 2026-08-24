@@ -23,7 +23,13 @@ type Baseline = {
   goalPriority: string[];
 };
 
-export function CheckinForm({ baseline }: { baseline: Baseline }) {
+export function CheckinForm({
+  baseline,
+  hasPhotoConsent,
+}: {
+  baseline: Baseline;
+  hasPhotoConsent: boolean;
+}) {
   const [troubleAreas, setTroubleAreas] = useState<string[]>([]);
   const [photoPath, setPhotoPath] = useState<string | null>(null);
   const [rednessComparison, setRednessComparison] = useState<
@@ -132,6 +138,7 @@ export function CheckinForm({ baseline }: { baseline: Baseline }) {
           path={photoPath}
           onChange={setPhotoPath}
           onAnalyzed={setRednessComparison}
+          hasPhotoConsent={hasPhotoConsent}
         />
         <p className="mt-1 text-xs text-neutral-400">
           업로드하면 직전 체크인 사진과 색상을 비교해 홍조가 늘었는지

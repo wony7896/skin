@@ -16,8 +16,10 @@ type Stage =
 
 export function ReportForm({
   products,
+  hasPhotoConsent,
 }: {
   products: { id: string; name: string }[];
+  hasPhotoConsent: boolean;
 }) {
   const [productId, setProductId] = useState(products[0]?.id ?? "");
   const [bodyArea, setBodyArea] = useState("");
@@ -202,7 +204,11 @@ export function ReportForm({
         <label className="mb-2 block text-sm font-medium text-neutral-700">
           증상 사진
         </label>
-        <PhotoUpload path={photoPath} onChange={setPhotoPath} />
+        <PhotoUpload
+          path={photoPath}
+          onChange={setPhotoPath}
+          hasPhotoConsent={hasPhotoConsent}
+        />
       </div>
 
       {error && <p className="mb-4 text-sm text-red-600">{error}</p>}

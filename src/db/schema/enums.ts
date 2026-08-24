@@ -37,3 +37,9 @@ export const skinGoalEnum = pgEnum("skin_goal", [
   "hydration",
   "trouble_care",
 ]);
+
+// PRD 섹션 6: 일반 이용약관과 별도로 받아야 하는 동의 항목들
+export const consentTypeEnum = pgEnum("consent_type", [
+  "sensitive_health_info", // 피부질환 이력·복용 약물·알레르기 정보
+  "biometric_photo", // 얼굴 클로즈업 사진 기반 분석
+]);

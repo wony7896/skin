@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { db } from "@/db";
 import { skinProfiles } from "@/db/schema";
 import { CheckinForm } from "@/components/checkin/CheckinForm";
+import { hasConsent } from "@/lib/consent";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function CheckinPage() {
@@ -26,6 +27,8 @@ export default async function CheckinPage() {
     redirect("/onboarding");
   }
 
+  const hasPhotoConsent = await hasConsent(user.id, "biometric_photo");
+
   return (
     <main className="min-h-screen bg-neutral-50">
       <div className="border-b border-neutral-200 bg-amber-50 px-4 py-2 text-center text-xs text-amber-800">
@@ -41,6 +44,7 @@ export default async function CheckinPage() {
           goals: (baseline.goals ?? []) as string[],
           goalPriority: (baseline.goalPriority ?? []) as string[],
         }}
+        hasPhotoConsent={hasPhotoConsent}
       />
     </main>
   );

@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
 import { signOut } from "@/app/login/actions";
+import { SensitiveInfoConsentGate } from "@/components/consent/SensitiveInfoConsentGate";
 import { OnboardingWizard } from "@/components/onboarding/OnboardingWizard";
+import { hasConsent } from "@/lib/consent";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function OnboardingPage() {
@@ -12,6 +14,8 @@ export default async function OnboardingPage() {
   if (!user) {
     redirect("/login");
   }
+
+  const consented = await hasConsent(user.id, "sensitive_health_info");
 
   return (
     <main className="min-h-screen bg-neutral-50">
@@ -26,7 +30,7 @@ export default async function OnboardingPage() {
           </button>
         </form>
       </div>
-      <OnboardingWizard />
+      {consented ? <OnboardingWizard /> : <SensitiveInfoConsentGate />}
     </main>
   );
 }

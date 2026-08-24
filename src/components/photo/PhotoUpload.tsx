@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { analyzeSkinPhoto } from "@/app/photo/actions";
+import { grantConsent } from "@/app/consent/actions";
 import { createClient } from "@/lib/supabase/client";
 
 const MAX_SIZE_BYTES = 10 * 1024 * 1024;
@@ -11,16 +12,32 @@ export function PhotoUpload({
   path,
   onChange,
   onAnalyzed,
+  hasPhotoConsent,
 }: {
   path: string | null;
   onChange: (path: string | null) => void;
   /** 제공하면 업로드 직후 이전 체크인 사진과 홍조를 상대 비교해 결과를 전달한다 (색상 기반 휴리스틱, 참고용) */
   onAnalyzed?: (comparison: "increased" | "decreased" | "similar" | null) => void;
+  /** 얼굴 사진(생체정보) 처리 동의 여부 — false면 업로드 UI 대신 별도 동의 체크박스를 먼저 보여준다 (PRD 섹션 6) */
+  hasPhotoConsent: boolean;
 }) {
+  const [consented, setConsented] = useState(hasPhotoConsent);
+  const [isConsenting, setIsConsenting] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  async function handleConsent() {
+    setIsConsenting(true);
+    const res = await grantConsent("biometric_photo");
+    setIsConsenting(false);
+    if (res.success) {
+      setConsented(true);
+    } else {
+      setError(res.error);
+    }
+  }
 
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -79,6 +96,26 @@ export function PhotoUpload({
   function handleRemove() {
     setPreviewUrl(null);
     onChange(null);
+  }
+
+  if (!consented) {
+    return (
+      <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-3">
+        <p className="mb-2 text-xs text-neutral-600">
+          얼굴이 담긴 피부 사진은 생체정보로 분류될 수 있어 별도 동의가
+          필요해요. 동의하지 않아도 사진 없이 계속 진행할 수 있어요.
+        </p>
+        <button
+          type="button"
+          onClick={handleConsent}
+          disabled={isConsenting}
+          className="rounded-full border border-neutral-300 bg-white px-3 py-1 text-xs text-neutral-700 hover:border-neutral-400 disabled:opacity-50"
+        >
+          {isConsenting ? "처리 중..." : "동의하고 사진 첨부하기"}
+        </button>
+        {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
+      </div>
+    );
   }
 
   return (

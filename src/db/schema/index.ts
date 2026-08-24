@@ -1,4 +1,5 @@
 export * from "./auth";
+export * from "./consents";
 export * from "./enums";
 export * from "./ingredients";
 export * from "./products";
