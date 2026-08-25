@@ -17,9 +17,8 @@ const EU_ANNEX_III_PATTERN = /\bIII\b\s*\//;
 
 // CosIng Function이 "PERFUMING"을 포함하면서 restriction이 Annex III(사용 제한·경고표시
 // 대상)를 가리키는지 — "EU에서 사용 제한이 걸린 향료 원료"라는 객관적 규제 신호.
-// 주의: 라벨에 개별 표기가 법적으로 의무인 향료 알레르겐(약 82종)의 정확한 목록과는 다르다 —
-// Annex III는 향료 원료 전반의 사용 제한(예: 최대 농도)을 담고 있어 이쪽이 더 넓은 집합이다.
-// 정확한 82종 목록이 필요하면 EU 규정 원문(entry 번호별 CAS)을 별도로 대조해야 한다.
+// 주의: 라벨에 개별 표기가 법적으로 의무인 향료 알레르겐(현재 약 80여 종 — isKnownFragranceAllergen
+// 참고)보다 넓은 집합이다 — Annex III는 향료 원료 전반의 사용 제한(예: 최대 농도)도 담고 있다.
 export function isRestrictedFragrance(
   functions: string[] | null,
   restriction: string | null,
@@ -32,14 +31,19 @@ export function isRestrictedFragrance(
   );
 }
 
-// Annex III entry 45, 67~92 — 2005년부터 시행된 "고전 24종" 향료 알레르겐 개별표기 의무
-// 목록의 정확한 entry 번호 범위. EU 공식 문서(entries 45 and 67-92)와 대조해 확인했다.
-// CosIng restriction 필드에 이미 그대로 담겨 있어 이 entry 번호를 정확히 읽기만 하면 된다.
-// 주의: 2023년 개정(Regulation (EU) 2023/1545)으로 56종이 추가됐지만, 우리 참조 데이터
-// (ingredient_ref.cosing_ingredients)는 2016년 스냅샷이라 그 56종은 애초에 들어있지 않다 —
-// EUR-Lex 원문은 봇 차단으로 접근이 막혀 있어 추가하지 못했다. 그 56종까지 정확히 잡으려면
-// 최신 CosIng 스냅샷이나 규정 원문(entry별 CAS)을 별도로 확보해야 한다.
-const EU_ANNEX_III_ALLERGEN_ENTRY_PATTERN = /\bIII\b\s*\/\s*(45|6[7-9]|[7-8][0-9]|9[0-2])\b/;
+// Annex III 향료 알레르겐 개별표기 의무 entry 번호 전체:
+// - 45, 67~92: 2005년부터 시행된 "고전 24종" (EU 공식 문서 "entries 45 and 67-92"와 대조 확인)
+// - 46, 109, 114, 122, 124, 131, 133, 154, 157, 175, 324, 353, 359, 327~371: Regulation (EU)
+//   2023/1545로 추가·개정된 항목. 이 규정 원문(EUR-Lex, OJ L 188/1, 27.7.2023)을 실제 브라우저
+//   세션으로 직접 읽어 entry 번호·CAS를 대조했다(curl/WebFetch는 EUR-Lex의 WAF 봇 차단에 막힘).
+// 196(Lippia citriodora absolute)은 의도적으로 제외했다 — 우리 2016년 스냅샷에 이미 "III/196"이
+// 완전히 다른 물질(HC Blue No. 11, 염모제 성분)에 붙어 있는 낡은 행이 있어서, 196을 넣으면 그
+// 행이 향료 알레르겐으로 잘못 분류된다. 353(Citrus Limon Peel Oil), 359(Laurus Nobilis Leaf Oil)
+// 이름은 기존 행에 이미 무관한 Annex II(전면 금지) 참조가 붙어 있어 일부러 갱신하지 않았다 —
+// entry 번호 자체는 패턴에 포함해도 안전하다(그 두 행의 restriction 문자열엔 "III/353"·"III/359"가
+// 없으므로 실제로 매치되지 않는다).
+const EU_ANNEX_III_ALLERGEN_ENTRY_PATTERN =
+  /\bIII\b\s*\/\s*(45|6[7-9]|[7-8][0-9]|9[0-2]|46|109|114|122|124|131|133|154|157|175|324|353|359|3(?:2[7-9]|[3-6][0-9]|7[01]))\b/;
 
 export function isKnownFragranceAllergen(restriction: string | null): boolean {
   return !!restriction && EU_ANNEX_III_ALLERGEN_ENTRY_PATTERN.test(restriction);
