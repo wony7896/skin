@@ -1,0 +1,1 @@
+ALTER TABLE "ingredients" ADD COLUMN "is_restricted_fragrance" boolean DEFAULT false NOT NULL;

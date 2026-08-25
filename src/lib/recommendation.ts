@@ -156,6 +156,7 @@ export async function getRecommendations(
       ingredientId: ingredients.id,
       position: productIngredients.position,
       isEuProhibited: ingredients.isEuProhibited,
+      isRestrictedFragrance: ingredients.isRestrictedFragrance,
     })
     .from(products)
     .leftJoin(productIngredients, eq(productIngredients.productId, products.id))
@@ -185,6 +186,7 @@ export async function getRecommendations(
       positions: Map<string, number>;
       totalIngredients: number;
       hasEuProhibitedIngredient: boolean;
+      restrictedFragranceNames: Set<string>;
     }
   >();
 
@@ -206,6 +208,7 @@ export async function getRecommendations(
         positions: new Map(),
         totalIngredients: 0,
         hasEuProhibitedIngredient: false,
+        restrictedFragranceNames: new Set(),
       });
     }
     const entry = byProduct.get(row.productId)!;
@@ -216,6 +219,7 @@ export async function getRecommendations(
       entry.positions.set(row.inciName!, row.position!);
       entry.totalIngredients += 1;
       if (row.isEuProhibited) entry.hasEuProhibitedIngredient = true;
+      if (row.isRestrictedFragrance) entry.restrictedFragranceNames.add(row.inciName!);
     }
   }
 
@@ -281,6 +285,16 @@ export async function getRecommendations(
         score += 5;
         reasons.push("알코올프리");
       }
+    }
+
+    // 민감 피부 프로필 + EU에서 사용 제한이 걸린 향료 원료 포함 — 카테고리 무관 공통 규칙.
+    // EU CosIng Restriction(Annex III) + Function(PERFUMING)을 기계적으로 대조한 객관적
+    // 규제 신호이며, 라벨 의무 표기 대상인 향료 알레르겐 82종 자체와는 다르다(더 넓은 집합).
+    if (isSensitive && product.restrictedFragranceNames.size > 0) {
+      const first = [...product.restrictedFragranceNames][0];
+      const label = product.koreanNames.get(first) ?? first;
+      score -= 10;
+      reasons.push(`민감 피부 프로필 — EU 사용 제한 향료 성분(${label}) 포함`);
     }
 
     // ③ 취향 적합도 — G단계 사용감 선호와 제품 실측 속성 매칭

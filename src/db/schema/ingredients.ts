@@ -20,6 +20,13 @@ export const ingredients = pgTable("ingredients", {
   // restriction이 Annex II(전면 금지 성분) 항목을 가리키는지 — 객관적 규제 사실이라 판단이
   // 필요 없다. true면 사용자의 개인 제외 목록과 무관하게 추천에서 항상 배제한다.
   isEuProhibited: boolean("is_eu_prohibited").notNull().default(false),
+  // EU CosIng Function이 "PERFUMING"을 포함하면서 동시에 restriction이 Annex III(사용 제한·
+  // 경고표시 대상) 항목인지 — "EU에서 사용 제한이 걸린 향료 원료"라는 객관적 규제 신호.
+  // 라벨에 개별 표기가 법적으로 의무인 향료 알레르겐 82종의 정확한 목록과는 다르며, 그보다
+  // 넓은 "제한 대상 향료 원료" 집합이다 (섹션: src/lib/ingredients.ts 주석 참고).
+  isRestrictedFragrance: boolean("is_restricted_fragrance")
+    .notNull()
+    .default(false),
   // 성분별 자극 유발 빈도 태그 (누적 보고 데이터로 갱신)
   irritantReportCount: integer("irritant_report_count").notNull().default(0),
   createdAt: timestamp("created_at", { withTimezone: true })

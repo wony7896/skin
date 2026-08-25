@@ -13,6 +13,25 @@ export function isAnnexIIProhibited(restriction: string | null): boolean {
   return !!restriction && EU_ANNEX_II_PATTERN.test(restriction);
 }
 
+const EU_ANNEX_III_PATTERN = /\bIII\b\s*\//;
+
+// CosIng Function이 "PERFUMING"을 포함하면서 restriction이 Annex III(사용 제한·경고표시
+// 대상)를 가리키는지 — "EU에서 사용 제한이 걸린 향료 원료"라는 객관적 규제 신호.
+// 주의: 라벨에 개별 표기가 법적으로 의무인 향료 알레르겐(약 82종)의 정확한 목록과는 다르다 —
+// Annex III는 향료 원료 전반의 사용 제한(예: 최대 농도)을 담고 있어 이쪽이 더 넓은 집합이다.
+// 정확한 82종 목록이 필요하면 EU 규정 원문(entry 번호별 CAS)을 별도로 대조해야 한다.
+export function isRestrictedFragrance(
+  functions: string[] | null,
+  restriction: string | null,
+): boolean {
+  return (
+    !!functions &&
+    functions.includes("PERFUMING") &&
+    !!restriction &&
+    EU_ANNEX_III_PATTERN.test(restriction)
+  );
+}
+
 // 새 제품의 성분을 product_ingredients에 넣기 전에는 항상 이 함수로 이름을 canonical
 // ingredient id로 변환한다 (대소문자 무시 비교 — 라벨 표기 차이로 "Glycerin"과 "glycerin"이
 // 서로 다른 행이 되는 것을 막기 위함).
@@ -48,6 +67,7 @@ export async function resolveIngredientId(name: string): Promise<string | null> 
       inciName: cosingIngredients.inciName,
       casNo: cosingIngredients.casNo,
       restriction: cosingIngredients.restriction,
+      functions: cosingIngredients.functions,
     })
     .from(cosingIngredients)
     .where(sql`lower(${cosingIngredients.inciName}) = ${lower}`)
@@ -61,6 +81,7 @@ export async function resolveIngredientId(name: string): Promise<string | null> 
       casNumber: fromRef.casNo,
       restriction: fromRef.restriction,
       isEuProhibited: isAnnexIIProhibited(fromRef.restriction),
+      isRestrictedFragrance: isRestrictedFragrance(fromRef.functions, fromRef.restriction),
     })
     .onConflictDoNothing({ target: ingredients.inciName })
     .returning({ id: ingredients.id });
