@@ -1,15 +1,26 @@
 # ingredient_ref.cosing_ingredients 데이터 출처
 
-- **원본**: EU 집행위 공식 CosIng(화장품 성분 데이터베이스), Regulation (EC) No 1223/2009 기반
-- **직접 소스**: https://github.com/beauteeru/cosmetic-ingredients-dataset (MIT License) — CosIng을
-  INCI명(name)/COSING ID(substance_id)/CAS번호(cas_no)/EC번호(ec_no)/PubChem CID·URL로 재정리한 CSV
-- **적재 방법**: `curl`로 원본 CSV를 그대로 다운로드한 뒤, `postgres`(porsager) 드라이버의
-  `COPY ... FROM STDIN`으로 파일을 바이트 단위 그대로 적재 — 사람이나 모델이 값을 옮겨 적는
-  과정이 없어 표기·기억 오류가 섞이지 않는다. 2026-08-25 기준 28,354행, CAS번호 보유 18,055행.
-- **없는 정보**: 한글명, 성분 기능 분류(보습제/방부제/자외선차단제 등), 자극·알레르기 유발 여부.
-  이런 정보가 필요한 목표 매칭·자극 성분 판단은 계속 `public.ingredients`의 큐레이션 데이터로만 한다.
-- **역할**: 이 표는 참조 전용 사전이다. 실제 추천 스코어링은 여기를 직접 읽지 않고,
-  `resolveIngredientId()`(src/lib/ingredients.ts)가 새 제품의 성분을 등록할 때만 이 표를 조회해
-  `public.ingredients`에 필요한 만큼만 정식 행으로 복사한다.
-- **최신화**: 이 CSV는 어느 시점의 스냅샷이며 CosIng 원본이 갱신돼도 자동으로 따라가지 않는다.
-  주기적으로 같은 방식(재다운로드 + COPY)으로 갱신이 필요하다.
+- **원본**: EU 집행위 공식 CosIng "Ingredients/Fragrance Inventory" (Regulation (EC) No 1223/2009 기반).
+  스냅샷 시점 2016-02-15 — 이후 추가·개정된 성분은 반영돼 있지 않을 수 있다.
+- **직접 소스**: https://github.com/openfoodfacts/openbeautyfacts (Open Beauty Facts 프로젝트가
+  보관 중인 EU 공식 원본 CSV 미러) — `cosing/COSING_Ingredients-Fragrance.Inventory_v2.csv`
+- **필드**: COSING Ref No, INCI name, INN name, Ph. Eur. Name, CAS No, EINECS/ELINCS No,
+  Chem/IUPAC Name/Description, Restriction, **Function**(콤마로 여러 개 나열, 예:
+  "HUMECTANT, SKIN CONDITIONING, SKIN PROTECTING"), Update Date — 원본 그대로 보관.
+  적재 후 SQL로 Function을 배열(`functions`)로 기계적으로 분해해뒀다(문자열 split일 뿐,
+  판단이 들어가는 가공이 아니다).
+- **적재 방법**: `curl`로 원본 CSV를 그대로 받은 뒤, 앞의 메타데이터 5줄(파일 생성일 등 비-CSV
+  프리앰블)을 제거하고, RFC4180 규격을 지키는 직접 작성한 파서로 파싱해 배치 INSERT.
+  일부 행(30개, 전체의 0.12%)은 원본 자체에 필드 구분이 깨져 있어(예: CAS/EC 번호를
+  " / " 대신 콤마로 나열) 10개 컬럼에 맞지 않았고, 추측으로 고치지 않고 스킵했다 — 잘못
+  추측해 고치는 것보다 정직하게 빼는 쪽이 안전하다. 최종 24,094행 적재, Function 정보 보유
+  23,860행, CAS번호 보유 대다수.
+- **없는 정보**: 한글명. Function 필드가 있긴 하지만 "SKIN CONDITIONING"처럼 매우 광범위한
+  태그가 많아, 이것만으로 "이 성분이 수분·보습 목표에 맞다"처럼 사이트 특정 목표에 직접
+  연결하기엔 부족하다 — 그 판단은 여전히 `public.ingredients`의 큐레이션 데이터(목표 매칭용
+  액티브 목록, 자극 성분 분류)로만 한다.
+- **역할**: 참조 전용 사전. 추천 스코어링은 여기를 직접 읽지 않고, `resolveIngredientId()`
+  (src/lib/ingredients.ts)가 새 제품의 성분을 등록할 때만 조회해 `public.ingredients`에
+  필요한 만큼만 정식 행으로 복사한다.
+- **최신화**: 스냅샷이라 자동으로 갱신되지 않는다. 주기적으로 같은 방식(재다운로드 + 파싱 +
+  배치 INSERT)으로 갱신이 필요하다.
