@@ -60,6 +60,14 @@ export function isUvFilter(functions: string[] | null): boolean {
   );
 }
 
+// CosIng Function이 "PRESERVATIVE"를 포함하는지 — UV FILTER와 같은 이유로 Annex V(보존제
+// 승인 목록) restriction 번호가 아니라 Function 태그로 판정한다. PRESERVATIVE 태그 179개 중
+// 148개는 restriction에도 "V/xx"가 붙어 있지만, 25개는 승인 시점이 우리 2016년 스냅샷보다
+// 늦어 번호가 안 붙어 있으면서도 Function은 이미 정확하다.
+export function isApprovedPreservative(functions: string[] | null): boolean {
+  return !!functions && functions.includes("PRESERVATIVE");
+}
+
 // 새 제품의 성분을 product_ingredients에 넣기 전에는 항상 이 함수로 이름을 canonical
 // ingredient id로 변환한다 (대소문자 무시 비교 — 라벨 표기 차이로 "Glycerin"과 "glycerin"이
 // 서로 다른 행이 되는 것을 막기 위함).
@@ -112,6 +120,7 @@ export async function resolveIngredientId(name: string): Promise<string | null> 
       isRestrictedFragrance: isRestrictedFragrance(fromRef.functions, fromRef.restriction),
       isKnownFragranceAllergen: isKnownFragranceAllergen(fromRef.restriction),
       isUvFilter: isUvFilter(fromRef.functions),
+      isApprovedPreservative: isApprovedPreservative(fromRef.functions),
     })
     .onConflictDoNothing({ target: ingredients.inciName })
     .returning({ id: ingredients.id });

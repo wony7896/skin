@@ -39,6 +39,13 @@ export const ingredients = pgTable("ingredients", {
   // EU Annex VI 승인이 2016-05(Regulation (EU) 2016/621)에 발효돼 우리 2016-02 스냅샷엔
   // Annex VI 번호가 안 붙어 있지만, Function은 "UV ABSORBER"로 이미 정확히 태그돼 있다.
   isUvFilter: boolean("is_uv_filter").notNull().default(false),
+  // CosIng Function이 "PRESERVATIVE"를 포함하는지 — UV FILTER와 같은 이유로 Annex V(보존제
+  // 승인 목록) restriction 번호가 아니라 Function 태그로 판정한다. Annex V 항목 148개는
+  // restriction에도 "V/xx"가 붙어 있지만, 25개는 승인 시점이 2016년 스냅샷보다 늦어 번호가
+  // 안 붙어 있으면서도 Function은 이미 정확하다 — UV FILTER의 Zinc Oxide와 같은 패턴.
+  isApprovedPreservative: boolean("is_approved_preservative")
+    .notNull()
+    .default(false),
   // 성분별 자극 유발 빈도 태그 (누적 보고 데이터로 갱신)
   irritantReportCount: integer("irritant_report_count").notNull().default(0),
   createdAt: timestamp("created_at", { withTimezone: true })
