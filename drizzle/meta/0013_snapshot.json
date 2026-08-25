@@ -1,0 +1,1377 @@
+{
+  "id": "b943a8a1-f9a3-4930-a7c5-fa8ca328ee42",
+  "prevId": "367b996d-c00b-40b6-b2c9-2ee05fe21722",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "auth.users": {
+      "name": "users",
+      "schema": "auth",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.user_consents": {
+      "name": "user_consents",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "consent_type": {
+          "name": "consent_type",
+          "type": "consent_type",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "granted_at": {
+          "name": "granted_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "user_consents_user_id_users_id_fk": {
+          "name": "user_consents_user_id_users_id_fk",
+          "tableFrom": "user_consents",
+          "tableTo": "users",
+          "schemaTo": "auth",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "user_consents_user_id_consent_type_unique": {
+          "name": "user_consents_user_id_consent_type_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "user_id",
+            "consent_type"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "ingredient_ref.cosing_ingredients": {
+      "name": "cosing_ingredients",
+      "schema": "ingredient_ref",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "cosing_ref_no": {
+          "name": "cosing_ref_no",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "inci_name": {
+          "name": "inci_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "inn_name": {
+          "name": "inn_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ph_eur_name": {
+          "name": "ph_eur_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "cas_no": {
+          "name": "cas_no",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "einecs_no": {
+          "name": "einecs_no",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "restriction": {
+          "name": "restriction",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "function_raw": {
+          "name": "function_raw",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "functions": {
+          "name": "functions",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "update_date": {
+          "name": "update_date",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "imported_at": {
+          "name": "imported_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.ingredient_aliases": {
+      "name": "ingredient_aliases",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "ingredient_id": {
+          "name": "ingredient_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "alias": {
+          "name": "alias",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "ingredient_aliases_ingredient_id_ingredients_id_fk": {
+          "name": "ingredient_aliases_ingredient_id_ingredients_id_fk",
+          "tableFrom": "ingredient_aliases",
+          "tableTo": "ingredients",
+          "columnsFrom": [
+            "ingredient_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "ingredient_aliases_alias_unique": {
+          "name": "ingredient_aliases_alias_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "alias"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.ingredients": {
+      "name": "ingredients",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "inci_name": {
+          "name": "inci_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "korean_name": {
+          "name": "korean_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "cas_number": {
+          "name": "cas_number",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "restriction": {
+          "name": "restriction",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "is_eu_prohibited": {
+          "name": "is_eu_prohibited",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "irritant_report_count": {
+          "name": "irritant_report_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "ingredients_inci_name_unique": {
+          "name": "ingredients_inci_name_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "inci_name"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.medications": {
+      "name": "medications",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "standard_code": {
+          "name": "standard_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "active_ingredient": {
+          "name": "active_ingredient",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "medications_standard_code_unique": {
+          "name": "medications_standard_code_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "standard_code"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.product_ingredients": {
+      "name": "product_ingredients",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "product_id": {
+          "name": "product_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ingredient_id": {
+          "name": "ingredient_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "position": {
+          "name": "position",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "product_ingredients_product_id_products_id_fk": {
+          "name": "product_ingredients_product_id_products_id_fk",
+          "tableFrom": "product_ingredients",
+          "tableTo": "products",
+          "columnsFrom": [
+            "product_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "product_ingredients_ingredient_id_ingredients_id_fk": {
+          "name": "product_ingredients_ingredient_id_ingredients_id_fk",
+          "tableFrom": "product_ingredients",
+          "tableTo": "ingredients",
+          "columnsFrom": [
+            "ingredient_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.products": {
+      "name": "products",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "brand": {
+          "name": "brand",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "category": {
+          "name": "category",
+          "type": "product_category",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "retailer": {
+          "name": "retailer",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "country": {
+          "name": "country",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'KR'"
+        },
+        "external_url": {
+          "name": "external_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "barcode": {
+          "name": "barcode",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "image_url": {
+          "name": "image_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "fragrance_level": {
+          "name": "fragrance_level",
+          "type": "fragrance_level",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'light'"
+        },
+        "texture": {
+          "name": "texture",
+          "type": "texture",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'medium'"
+        },
+        "color_free": {
+          "name": "color_free",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.excluded_ingredients": {
+      "name": "excluded_ingredients",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ingredient_id": {
+          "name": "ingredient_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "ingredient_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'suspected'"
+        },
+        "source": {
+          "name": "source",
+          "type": "report_source",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "report_count": {
+          "name": "report_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "first_reported_at": {
+          "name": "first_reported_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "last_reported_at": {
+          "name": "last_reported_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "excluded_ingredients_user_id_users_id_fk": {
+          "name": "excluded_ingredients_user_id_users_id_fk",
+          "tableFrom": "excluded_ingredients",
+          "tableTo": "users",
+          "schemaTo": "auth",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "excluded_ingredients_ingredient_id_ingredients_id_fk": {
+          "name": "excluded_ingredients_ingredient_id_ingredients_id_fk",
+          "tableFrom": "excluded_ingredients",
+          "tableTo": "ingredients",
+          "columnsFrom": [
+            "ingredient_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "excluded_ingredients_user_id_ingredient_id_unique": {
+          "name": "excluded_ingredients_user_id_ingredient_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "user_id",
+            "ingredient_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.skin_profiles": {
+      "name": "skin_profiles",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "source": {
+          "name": "source",
+          "type": "profile_source",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tightness_minutes": {
+          "name": "tightness_minutes",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "t_zone_shine_minutes": {
+          "name": "t_zone_shine_minutes",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "pore_size": {
+          "name": "pore_size",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "oiliness_visual": {
+          "name": "oiliness_visual",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "oily_dry_score": {
+          "name": "oily_dry_score",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "diagnosed_conditions": {
+          "name": "diagnosed_conditions",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "recent_procedures": {
+          "name": "recent_procedures",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "past_reactions": {
+          "name": "past_reactions",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "had_patch_test": {
+          "name": "had_patch_test",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "atopic_family_history": {
+          "name": "atopic_family_history",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "pregnancy_status": {
+          "name": "pregnancy_status",
+          "type": "pregnancy_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "humidity_region": {
+          "name": "humidity_region",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "uv_exposure_hours": {
+          "name": "uv_exposure_hours",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "mask_hours": {
+          "name": "mask_hours",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sleep_hours": {
+          "name": "sleep_hours",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "stress_level": {
+          "name": "stress_level",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "is_smoker": {
+          "name": "is_smoker",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "current_routine_products": {
+          "name": "current_routine_products",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "last_new_product_at": {
+          "name": "last_new_product_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "goals": {
+          "name": "goals",
+          "type": "skin_goal[]",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "goal_priority": {
+          "name": "goal_priority",
+          "type": "skin_goal[]",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "fragrance_preference": {
+          "name": "fragrance_preference",
+          "type": "fragrance_level",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "texture_preference": {
+          "name": "texture_preference",
+          "type": "texture",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "prefers_color_free": {
+          "name": "prefers_color_free",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "trouble_areas": {
+          "name": "trouble_areas",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "photo_url": {
+          "name": "photo_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "redness_level": {
+          "name": "redness_level",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "flaking_level": {
+          "name": "flaking_level",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "recent_recommendation_satisfaction": {
+          "name": "recent_recommendation_satisfaction",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "menstrual_cycle_change": {
+          "name": "menstrual_cycle_change",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "skin_profiles_user_id_users_id_fk": {
+          "name": "skin_profiles_user_id_users_id_fk",
+          "tableFrom": "skin_profiles",
+          "tableTo": "users",
+          "schemaTo": "auth",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.trouble_reports": {
+      "name": "trouble_reports",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "product_id": {
+          "name": "product_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "onset_days": {
+          "name": "onset_days",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "body_area": {
+          "name": "body_area",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "severity": {
+          "name": "severity",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "photo_url": {
+          "name": "photo_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "trouble_reports_user_id_users_id_fk": {
+          "name": "trouble_reports_user_id_users_id_fk",
+          "tableFrom": "trouble_reports",
+          "tableTo": "users",
+          "schemaTo": "auth",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "trouble_reports_product_id_products_id_fk": {
+          "name": "trouble_reports_product_id_products_id_fk",
+          "tableFrom": "trouble_reports",
+          "tableTo": "products",
+          "columnsFrom": [
+            "product_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.user_medications": {
+      "name": "user_medications",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "skin_profile_id": {
+          "name": "skin_profile_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "medication_id": {
+          "name": "medication_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "free_text_name": {
+          "name": "free_text_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "input_method": {
+          "name": "input_method",
+          "type": "input_method",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "user_medications_user_id_users_id_fk": {
+          "name": "user_medications_user_id_users_id_fk",
+          "tableFrom": "user_medications",
+          "tableTo": "users",
+          "schemaTo": "auth",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "user_medications_skin_profile_id_skin_profiles_id_fk": {
+          "name": "user_medications_skin_profile_id_skin_profiles_id_fk",
+          "tableFrom": "user_medications",
+          "tableTo": "skin_profiles",
+          "columnsFrom": [
+            "skin_profile_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "user_medications_medication_id_medications_id_fk": {
+          "name": "user_medications_medication_id_medications_id_fk",
+          "tableFrom": "user_medications",
+          "tableTo": "medications",
+          "columnsFrom": [
+            "medication_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.recommendations": {
+      "name": "recommendations",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "skin_profile_id": {
+          "name": "skin_profile_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "product_id": {
+          "name": "product_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "category": {
+          "name": "category",
+          "type": "product_category",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "safety_passed": {
+          "name": "safety_passed",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "goal_fit_score": {
+          "name": "goal_fit_score",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "reason": {
+          "name": "reason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "recommended_at": {
+          "name": "recommended_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "recommendations_user_id_users_id_fk": {
+          "name": "recommendations_user_id_users_id_fk",
+          "tableFrom": "recommendations",
+          "tableTo": "users",
+          "schemaTo": "auth",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "recommendations_skin_profile_id_skin_profiles_id_fk": {
+          "name": "recommendations_skin_profile_id_skin_profiles_id_fk",
+          "tableFrom": "recommendations",
+          "tableTo": "skin_profiles",
+          "columnsFrom": [
+            "skin_profile_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "recommendations_product_id_products_id_fk": {
+          "name": "recommendations_product_id_products_id_fk",
+          "tableFrom": "recommendations",
+          "tableTo": "products",
+          "columnsFrom": [
+            "product_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.usage_feedback": {
+      "name": "usage_feedback",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "recommendation_id": {
+          "name": "recommendation_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "satisfaction_score": {
+          "name": "satisfaction_score",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "had_trouble": {
+          "name": "had_trouble",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "repurchase_intent": {
+          "name": "repurchase_intent",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "feedback_text": {
+          "name": "feedback_text",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "usage_feedback_user_id_users_id_fk": {
+          "name": "usage_feedback_user_id_users_id_fk",
+          "tableFrom": "usage_feedback",
+          "tableTo": "users",
+          "schemaTo": "auth",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "usage_feedback_recommendation_id_recommendations_id_fk": {
+          "name": "usage_feedback_recommendation_id_recommendations_id_fk",
+          "tableFrom": "usage_feedback",
+          "tableTo": "recommendations",
+          "columnsFrom": [
+            "recommendation_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {
+    "public.consent_type": {
+      "name": "consent_type",
+      "schema": "public",
+      "values": [
+        "sensitive_health_info",
+        "biometric_photo"
+      ]
+    },
+    "public.fragrance_level": {
+      "name": "fragrance_level",
+      "schema": "public",
+      "values": [
+        "none",
+        "light",
+        "strong"
+      ]
+    },
+    "public.ingredient_status": {
+      "name": "ingredient_status",
+      "schema": "public",
+      "values": [
+        "suspected",
+        "confirmed"
+      ]
+    },
+    "public.input_method": {
+      "name": "input_method",
+      "schema": "public",
+      "values": [
+        "photo",
+        "barcode",
+        "search"
+      ]
+    },
+    "public.pregnancy_status": {
+      "name": "pregnancy_status",
+      "schema": "public",
+      "values": [
+        "none",
+        "pregnant",
+        "breastfeeding"
+      ]
+    },
+    "public.product_category": {
+      "name": "product_category",
+      "schema": "public",
+      "values": [
+        "cleansing",
+        "toner",
+        "essence_serum",
+        "cream_lotion",
+        "sunscreen_spot"
+      ]
+    },
+    "public.profile_source": {
+      "name": "profile_source",
+      "schema": "public",
+      "values": [
+        "onboarding",
+        "checkin"
+      ]
+    },
+    "public.report_source": {
+      "name": "report_source",
+      "schema": "public",
+      "values": [
+        "onboarding",
+        "checkin",
+        "event_report"
+      ]
+    },
+    "public.skin_goal": {
+      "name": "skin_goal",
+      "schema": "public",
+      "values": [
+        "brightening",
+        "wrinkle_elasticity",
+        "pore",
+        "hydration",
+        "trouble_care"
+      ]
+    },
+    "public.texture": {
+      "name": "texture",
+      "schema": "public",
+      "values": [
+        "light",
+        "medium",
+        "rich"
+      ]
+    }
+  },
+  "schemas": {
+    "ingredient_ref": "ingredient_ref"
+  },
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

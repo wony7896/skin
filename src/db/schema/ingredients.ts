@@ -1,4 +1,5 @@
 import {
+  boolean,
   integer,
   pgTable,
   text,
@@ -6,12 +7,19 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
-// INCI 화장품 성분사전 — 식약처 성분사전 등 공개 DB 기반 (PRD 섹션 2)
+// INCI 화장품 성분사전 — 목표 매칭·자극 성분 분류용으로 손으로 큐레이션한 행 +
+// ingredient_ref.cosing_ingredients(EU 공식 CosIng)에서 실제 제품에 쓰일 때마다
+// resolveIngredientId()가 자동으로 복사해오는 행이 함께 있다 (src/lib/ingredients.ts).
 export const ingredients = pgTable("ingredients", {
   id: uuid("id").primaryKey().defaultRandom(),
   inciName: text("inci_name").notNull().unique(),
   koreanName: text("korean_name"),
   casNumber: text("cas_number"),
+  // EU CosIng의 Restriction 필드 원문(예: "III/243") — 참조 스키마에서 그대로 복사.
+  restriction: text("restriction"),
+  // restriction이 Annex II(전면 금지 성분) 항목을 가리키는지 — 객관적 규제 사실이라 판단이
+  // 필요 없다. true면 사용자의 개인 제외 목록과 무관하게 추천에서 항상 배제한다.
+  isEuProhibited: boolean("is_eu_prohibited").notNull().default(false),
   // 성분별 자극 유발 빈도 태그 (누적 보고 데이터로 갱신)
   irritantReportCount: integer("irritant_report_count").notNull().default(0),
   createdAt: timestamp("created_at", { withTimezone: true })

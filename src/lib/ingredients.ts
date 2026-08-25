@@ -2,6 +2,17 @@ import { eq, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { cosingIngredients, ingredientAliases, ingredients } from "@/db/schema";
 
+// EU CosIng의 Restriction 필드는 "III/243", "Annex III/I/262 - Directive 2012/21/EU"처럼
+// 로마 숫자 Annex 번호를 담는다. "II"가 "III"의 부분 문자열이라 단순 포함 검사로는 Annex III를
+// Annex II로 잘못 집계하므로 반드시 단어 경계(\b)로 앵커링해야 한다.
+const EU_ANNEX_II_PATTERN = /\bII\b\s*\//;
+
+// restriction 문자열이 EU Annex II(화장품 전면 금지 성분 목록)를 가리키는지 — 규제 사실
+// 그대로를 파싱하는 것이라 판단이 필요 없다.
+export function isAnnexIIProhibited(restriction: string | null): boolean {
+  return !!restriction && EU_ANNEX_II_PATTERN.test(restriction);
+}
+
 // 새 제품의 성분을 product_ingredients에 넣기 전에는 항상 이 함수로 이름을 canonical
 // ingredient id로 변환한다 (대소문자 무시 비교 — 라벨 표기 차이로 "Glycerin"과 "glycerin"이
 // 서로 다른 행이 되는 것을 막기 위함).
@@ -36,6 +47,7 @@ export async function resolveIngredientId(name: string): Promise<string | null> 
     .select({
       inciName: cosingIngredients.inciName,
       casNo: cosingIngredients.casNo,
+      restriction: cosingIngredients.restriction,
     })
     .from(cosingIngredients)
     .where(sql`lower(${cosingIngredients.inciName}) = ${lower}`)
@@ -44,7 +56,12 @@ export async function resolveIngredientId(name: string): Promise<string | null> 
 
   const [created] = await db
     .insert(ingredients)
-    .values({ inciName: fromRef.inciName, casNumber: fromRef.casNo })
+    .values({
+      inciName: fromRef.inciName,
+      casNumber: fromRef.casNo,
+      restriction: fromRef.restriction,
+      isEuProhibited: isAnnexIIProhibited(fromRef.restriction),
+    })
     .onConflictDoNothing({ target: ingredients.inciName })
     .returning({ id: ingredients.id });
   if (created) return created.id;

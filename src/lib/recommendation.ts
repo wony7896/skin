@@ -155,6 +155,7 @@ export async function getRecommendations(
       koreanName: ingredients.koreanName,
       ingredientId: ingredients.id,
       position: productIngredients.position,
+      isEuProhibited: ingredients.isEuProhibited,
     })
     .from(products)
     .leftJoin(productIngredients, eq(productIngredients.productId, products.id))
@@ -183,6 +184,7 @@ export async function getRecommendations(
       koreanNames: Map<string, string | null>;
       positions: Map<string, number>;
       totalIngredients: number;
+      hasEuProhibitedIngredient: boolean;
     }
   >();
 
@@ -203,6 +205,7 @@ export async function getRecommendations(
         koreanNames: new Map(),
         positions: new Map(),
         totalIngredients: 0,
+        hasEuProhibitedIngredient: false,
       });
     }
     const entry = byProduct.get(row.productId)!;
@@ -212,17 +215,20 @@ export async function getRecommendations(
       entry.koreanNames.set(row.inciName!, row.koreanName);
       entry.positions.set(row.inciName!, row.position!);
       entry.totalIngredients += 1;
+      if (row.isEuProhibited) entry.hasEuProhibitedIngredient = true;
     }
   }
 
   const scored: ScoredProduct[] = [];
 
   for (const [productId, product] of byProduct) {
-    // ① 안전성 필터 — 제외 성분이 하나라도 있으면 후보에서 완전히 배제
+    // ① 안전성 필터 — 사용자 개인 제외 성분이거나, EU Annex II(전면 금지 성분)가 하나라도
+    // 있으면 후보에서 완전히 배제. 후자는 개인 제외 목록과 무관하게 모든 사용자에게 적용되는
+    // 객관적 규제 사실이다 (src/lib/ingredients.ts의 isAnnexIIProhibited).
     const hasExcluded = [...product.ingredientIds].some((id) =>
       excludedIds.has(id),
     );
-    if (hasExcluded) continue;
+    if (hasExcluded || product.hasEuProhibitedIngredient) continue;
 
     let score = 0;
     const reasons: string[] = [];
