@@ -40,6 +40,25 @@ const HARSH_SURFACTANTS = ["Sodium Lauryl Sulfate", "Sodium Laureth Sulfate"];
 // 참고 목록이며, 실제 배합 단계에서는 전문가 검증이 필요하다.
 const PREGNANCY_CAUTION_INGREDIENTS = ["Retinol", "Salicylic Acid"];
 
+// 승인된 보존제(isApprovedPreservative=true) 중에서도 실제로 EU가 별도 조치를 취한 특정
+// 성분만 담는다 — "논란이 있다"는 인상만으로 넣지 않고, 확인 가능한 규제 사실이 있는 것만.
+// 메틸이소치아졸리논(MIT): SCCS 자극성 평가(2013-12-12) 이후 EU가 리브온 제품에서 전면
+// 금지(Regulation 공포 2016-07-23, 시행 2017-02-12) — 워시오프 제품에는 제한된 농도로 계속
+// 허용. 출처: SCCS opinion, Commission Regulation 시행 공지(CosmeticOBS 등 복수 소스로 교차
+// 확인). 다른 보존제(포름알데히드 방출체 등)는 아직 이 정도로 명확한 단일 조치를 확인하지
+// 못해 넣지 않았다.
+const CONTROVERSIAL_PRESERVATIVES = ["Methylisothiazolinone"];
+
+// EU가 리브온 제품에서 특정 성분을 전면 금지했을 때, 그 판단을 그대로 반영할 카테고리 —
+// 클렌징(워시오프)은 제외한다. 우리 사이트는 한국 시장 대상이라 "불법"은 아니지만, 성분
+// 안전성 판단 기준으로 EU 리브온 금지 사실 자체는 그대로 참고할 만하다.
+const LEAVE_ON_CATEGORIES: ProductCategory[] = [
+  "toner",
+  "essence_serum",
+  "cream_lotion",
+  "sunscreen_spot",
+];
+
 const GOAL_PRIORITY_WEIGHT = [3, 2]; // 1순위, 2순위
 const GOAL_SECONDARY_WEIGHT = 1; // 우선순위엔 없지만 관심 목표로 고른 것
 
@@ -316,6 +335,24 @@ export async function getRecommendations(
     if (category === "sunscreen_spot" && !product.hasUvFilterIngredient) {
       score -= 15;
       reasons.push("자외선차단 성분 확인 안 됨 — 전성분 정보 확인 필요");
+    }
+
+    // 민감 피부 프로필 + 특정 논란 보존제 — EU가 실제로 조치를 취한 성분만 담은
+    // CONTROVERSIAL_PRESERVATIVES 참고. 리브온 카테고리는 EU가 2017년부터 전면 금지한
+    // 사실을 그대로 반영해 더 강하게, 워시오프(클렌징)는 여전히 제한된 농도로는 합법이라 더
+    // 약하게 감점한다.
+    const controversialPreservative = CONTROVERSIAL_PRESERVATIVES.find((n) =>
+      product.inciNames.has(n),
+    );
+    if (isSensitive && controversialPreservative) {
+      const label = product.koreanNames.get(controversialPreservative) ?? controversialPreservative;
+      if (LEAVE_ON_CATEGORIES.includes(category)) {
+        score -= 20;
+        reasons.push(`민감 피부 프로필 — 리브온 제품 EU 사용금지 보존제(${label}) 포함`);
+      } else {
+        score -= 8;
+        reasons.push(`민감 피부 프로필 — 알레르기 논란 보존제(${label}) 포함`);
+      }
     }
 
     // ③ 취향 적합도 — G단계 사용감 선호와 제품 실측 속성 매칭
