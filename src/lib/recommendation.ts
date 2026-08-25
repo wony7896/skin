@@ -157,6 +157,8 @@ export async function getRecommendations(
       position: productIngredients.position,
       isEuProhibited: ingredients.isEuProhibited,
       isRestrictedFragrance: ingredients.isRestrictedFragrance,
+      isKnownFragranceAllergen: ingredients.isKnownFragranceAllergen,
+      isUvFilter: ingredients.isUvFilter,
     })
     .from(products)
     .leftJoin(productIngredients, eq(productIngredients.productId, products.id))
@@ -187,6 +189,8 @@ export async function getRecommendations(
       totalIngredients: number;
       hasEuProhibitedIngredient: boolean;
       restrictedFragranceNames: Set<string>;
+      knownAllergenNames: Set<string>;
+      hasUvFilterIngredient: boolean;
     }
   >();
 
@@ -209,6 +213,8 @@ export async function getRecommendations(
         totalIngredients: 0,
         hasEuProhibitedIngredient: false,
         restrictedFragranceNames: new Set(),
+        knownAllergenNames: new Set(),
+        hasUvFilterIngredient: false,
       });
     }
     const entry = byProduct.get(row.productId)!;
@@ -220,6 +226,8 @@ export async function getRecommendations(
       entry.totalIngredients += 1;
       if (row.isEuProhibited) entry.hasEuProhibitedIngredient = true;
       if (row.isRestrictedFragrance) entry.restrictedFragranceNames.add(row.inciName!);
+      if (row.isKnownFragranceAllergen) entry.knownAllergenNames.add(row.inciName!);
+      if (row.isUvFilter) entry.hasUvFilterIngredient = true;
     }
   }
 
@@ -287,14 +295,27 @@ export async function getRecommendations(
       }
     }
 
-    // 민감 피부 프로필 + EU에서 사용 제한이 걸린 향료 원료 포함 — 카테고리 무관 공통 규칙.
-    // EU CosIng Restriction(Annex III) + Function(PERFUMING)을 기계적으로 대조한 객관적
-    // 규제 신호이며, 라벨 의무 표기 대상인 향료 알레르겐 82종 자체와는 다르다(더 넓은 집합).
-    if (isSensitive && product.restrictedFragranceNames.size > 0) {
+    // 민감 피부 프로필 + 향료 관련 감점 — 카테고리 무관 공통 규칙. 정확한 알레르겐(Annex III
+    // entry 45·67-92, 2005년부터 개별표기 의무 대상)이 있으면 더 강하게, 없고 더 넓은 범위의
+    // "EU 사용 제한 향료 원료"만 있으면 그보다 약하게 감점한다. knownAllergenNames는
+    // restrictedFragranceNames의 부분집합이라 같은 성분을 이중으로 감점하지 않는다.
+    if (isSensitive && product.knownAllergenNames.size > 0) {
+      const first = [...product.knownAllergenNames][0];
+      const label = product.koreanNames.get(first) ?? first;
+      score -= 15;
+      reasons.push(`민감 피부 프로필 — EU 지정 향료 알레르겐(${label}) 포함`);
+    } else if (isSensitive && product.restrictedFragranceNames.size > 0) {
       const first = [...product.restrictedFragranceNames][0];
       const label = product.koreanNames.get(first) ?? first;
       score -= 10;
       reasons.push(`민감 피부 프로필 — EU 사용 제한 향료 성분(${label}) 포함`);
+    }
+
+    // 자외선차단 성분 확인 — 하드 배제가 아니라 감점 신호다. 성분표가 3~4개로 얕게 입력된
+    // 경우가 많아, 실제로는 자외선차단 성분이 있는데 아직 DB에 안 들어갔을 수도 있기 때문.
+    if (category === "sunscreen_spot" && !product.hasUvFilterIngredient) {
+      score -= 15;
+      reasons.push("자외선차단 성분 확인 안 됨 — 전성분 정보 확인 필요");
     }
 
     // ③ 취향 적합도 — G단계 사용감 선호와 제품 실측 속성 매칭

@@ -32,6 +32,30 @@ export function isRestrictedFragrance(
   );
 }
 
+// Annex III entry 45, 67~92 — 2005년부터 시행된 "고전 24종" 향료 알레르겐 개별표기 의무
+// 목록의 정확한 entry 번호 범위. EU 공식 문서(entries 45 and 67-92)와 대조해 확인했다.
+// CosIng restriction 필드에 이미 그대로 담겨 있어 이 entry 번호를 정확히 읽기만 하면 된다.
+// 주의: 2023년 개정(Regulation (EU) 2023/1545)으로 56종이 추가됐지만, 우리 참조 데이터
+// (ingredient_ref.cosing_ingredients)는 2016년 스냅샷이라 그 56종은 애초에 들어있지 않다 —
+// EUR-Lex 원문은 봇 차단으로 접근이 막혀 있어 추가하지 못했다. 그 56종까지 정확히 잡으려면
+// 최신 CosIng 스냅샷이나 규정 원문(entry별 CAS)을 별도로 확보해야 한다.
+const EU_ANNEX_III_ALLERGEN_ENTRY_PATTERN = /\bIII\b\s*\/\s*(45|6[7-9]|[7-8][0-9]|9[0-2])\b/;
+
+export function isKnownFragranceAllergen(restriction: string | null): boolean {
+  return !!restriction && EU_ANNEX_III_ALLERGEN_ENTRY_PATTERN.test(restriction);
+}
+
+// CosIng Function이 "UV FILTER" 또는 "UV ABSORBER"를 포함하는지 — Annex VI(자외선차단
+// 성분 승인 목록) restriction 번호가 아니라 Function 태그로 판정한다. Annex VI 번호에만
+// 의존하면 Zinc Oxide처럼 EU 승인일(2016-05, Regulation (EU) 2016/621)이 우리 참조 데이터의
+// 스냅샷 시점(2016-02)보다 늦어 Annex VI 번호가 아예 안 붙어 있는 성분을 놓치게 된다.
+export function isUvFilter(functions: string[] | null): boolean {
+  return (
+    !!functions &&
+    (functions.includes("UV FILTER") || functions.includes("UV ABSORBER"))
+  );
+}
+
 // 새 제품의 성분을 product_ingredients에 넣기 전에는 항상 이 함수로 이름을 canonical
 // ingredient id로 변환한다 (대소문자 무시 비교 — 라벨 표기 차이로 "Glycerin"과 "glycerin"이
 // 서로 다른 행이 되는 것을 막기 위함).
@@ -82,6 +106,8 @@ export async function resolveIngredientId(name: string): Promise<string | null> 
       restriction: fromRef.restriction,
       isEuProhibited: isAnnexIIProhibited(fromRef.restriction),
       isRestrictedFragrance: isRestrictedFragrance(fromRef.functions, fromRef.restriction),
+      isKnownFragranceAllergen: isKnownFragranceAllergen(fromRef.restriction),
+      isUvFilter: isUvFilter(fromRef.functions),
     })
     .onConflictDoNothing({ target: ingredients.inciName })
     .returning({ id: ingredients.id });

@@ -27,6 +27,18 @@ export const ingredients = pgTable("ingredients", {
   isRestrictedFragrance: boolean("is_restricted_fragrance")
     .notNull()
     .default(false),
+  // restriction이 Annex III의 향료 알레르겐 개별표기 의무 항목(entry 45, 67~92 — 2005년부터
+  // 시행된 "고전 24종" 목록)을 정확히 가리키는지. EU 공식 CosIng 데이터에 이미 담긴 entry
+  // 번호를 그대로 읽는 것이라 판단이 필요 없다. 단, 이 사전 자체가 2016년 스냅샷이라 2023년
+  // 개정으로 추가된 56종은 반영돼 있지 않다 — isRestrictedFragrance(더 넓은 집합)로만 잡힌다.
+  isKnownFragranceAllergen: boolean("is_known_fragrance_allergen")
+    .notNull()
+    .default(false),
+  // CosIng Function이 "UV FILTER" 또는 "UV ABSORBER"를 포함하는지. Annex VI(자외선차단
+  // 성분 승인 목록) 번호가 아니라 Function 태그로 판정한다 — 예를 들어 Zinc Oxide는 실제
+  // EU Annex VI 승인이 2016-05(Regulation (EU) 2016/621)에 발효돼 우리 2016-02 스냅샷엔
+  // Annex VI 번호가 안 붙어 있지만, Function은 "UV ABSORBER"로 이미 정확히 태그돼 있다.
+  isUvFilter: boolean("is_uv_filter").notNull().default(false),
   // 성분별 자극 유발 빈도 태그 (누적 보고 데이터로 갱신)
   irritantReportCount: integer("irritant_report_count").notNull().default(0),
   createdAt: timestamp("created_at", { withTimezone: true })

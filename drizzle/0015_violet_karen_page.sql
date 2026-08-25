@@ -1,0 +1,2 @@
+ALTER TABLE "ingredients" ADD COLUMN "is_known_fragrance_allergen" boolean DEFAULT false NOT NULL;--> statement-breakpoint
+ALTER TABLE "ingredients" ADD COLUMN "is_uv_filter" boolean DEFAULT false NOT NULL;
