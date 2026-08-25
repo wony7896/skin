@@ -71,6 +71,13 @@
       "when": 1787582239201,
       "tag": "0009_furry_network",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1787624588533,
+      "tag": "0010_motionless_silverclaw",
+      "breakpoints": true
     }
   ]
 }
