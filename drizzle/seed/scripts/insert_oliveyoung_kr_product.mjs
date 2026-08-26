@@ -113,7 +113,7 @@ const [product] = await sql`
     '올리브영',
     'KR',
     'https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000219553',
-    'https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/10/0000/0021/A00000021955350ko.jpg?l=ko&QT=85&SF=webp&sharpen=1x0.5',
+    'https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/10/0000/0021/A00000021955351ko.jpg?l=ko&QT=85&SF=webp&sharpen=1x0.5',
     'none', 'medium', true
   )
   RETURNING id
