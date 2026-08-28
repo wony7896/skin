@@ -4,7 +4,7 @@ import { desc, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { skinProfiles } from "@/db/schema";
 import type { SkinGoal } from "@/components/onboarding/types";
-import { createClient } from "@/lib/supabase/server";
+import { getSessionUser } from "@/lib/auth";
 
 export async function submitCheckin(input: {
   troubleAreas: string[];
@@ -19,10 +19,7 @@ export async function submitCheckin(input: {
   goals: SkinGoal[];
   goalPriority: SkinGoal[];
 }) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { user } = await getSessionUser();
 
   if (!user) {
     return { success: false as const, error: "로그인이 필요합니다." as const };

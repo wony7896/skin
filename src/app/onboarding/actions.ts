@@ -2,14 +2,11 @@
 
 import { db } from "@/db";
 import { skinProfiles, userMedications } from "@/db/schema";
-import { createClient } from "@/lib/supabase/server";
+import { getSessionUser } from "@/lib/auth";
 import type { OnboardingData } from "@/components/onboarding/types";
 
 export async function submitOnboarding(data: OnboardingData) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { user } = await getSessionUser();
 
   if (!user) {
     return { error: "로그인이 필요합니다." as const };

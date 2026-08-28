@@ -2,14 +2,11 @@
 
 import { db } from "@/db";
 import { userConsents } from "@/db/schema";
+import { getSessionUser } from "@/lib/auth";
 import type { ConsentType } from "@/lib/consent";
-import { createClient } from "@/lib/supabase/server";
 
 export async function grantConsent(consentType: ConsentType) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { user } = await getSessionUser();
 
   if (!user) {
     return { success: false as const, error: "로그인이 필요합니다." as const };

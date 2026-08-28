@@ -1,5 +1,4 @@
 import { desc, eq } from "drizzle-orm";
-import { redirect } from "next/navigation";
 import { db } from "@/db";
 import { recommendations, skinProfiles } from "@/db/schema";
 import {
@@ -8,21 +7,15 @@ import {
   CATEGORY_ORDER,
   getRecommendations,
 } from "@/lib/recommendation";
-import { createClient } from "@/lib/supabase/server";
+import { AppHeader } from "@/components/AppHeader";
+import { requireUser } from "@/lib/auth";
 
 export default async function RecommendationsPage({
   searchParams,
 }: {
   searchParams: Promise<{ intl?: string }>;
 }) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/login");
-  }
+  const { user } = await requireUser();
 
   const { intl } = await searchParams;
   const includeInternational = intl === "1";
@@ -40,14 +33,17 @@ export default async function RecommendationsPage({
 
   if (!latestProfile) {
     return (
-      <main className="mx-auto max-w-xl px-4 py-16 text-center">
-        <h1 className="text-xl font-semibold text-neutral-900">
-          아직 진단 결과가 없어요
-        </h1>
-        <p className="mt-2 text-neutral-500">
-          먼저 온보딩 설문을 완료해주세요.
-        </p>
-      </main>
+      <>
+        <AppHeader />
+        <main className="mx-auto max-w-xl px-4 py-16 text-center">
+          <h1 className="text-xl font-semibold text-neutral-900">
+            아직 진단 결과가 없어요
+          </h1>
+          <p className="mt-2 text-neutral-500">
+            먼저 온보딩 설문을 완료해주세요.
+          </p>
+        </main>
+      </>
     );
   }
 
@@ -79,7 +75,9 @@ export default async function RecommendationsPage({
   );
 
   return (
-    <main className="min-h-screen bg-neutral-50 px-4 py-10">
+    <>
+      <AppHeader />
+      <main className="min-h-screen bg-neutral-50 px-4 py-10">
       <div className="mx-auto max-w-2xl">
         <h1 className="mb-2 text-xl font-semibold text-neutral-900">
           맞춤 추천
@@ -150,6 +148,7 @@ export default async function RecommendationsPage({
           </section>
         ))}
       </div>
-    </main>
+      </main>
+    </>
   );
 }
