@@ -26,10 +26,6 @@ function fmtDate(d: Date | string | null) {
   });
 }
 
-function dayKey(d: Date | string) {
-  return new Date(d).toLocaleDateString("ko-KR");
-}
-
 /** 이전 스냅샷 대비 증감을 "(+2)" / "(−1)" 형태로. 첫 스냅샷이거나 값이 같으면 빈 문자열. */
 function delta(current: number | null, previous: number | null | undefined) {
   if (current == null || previous == null) return "";
@@ -64,26 +60,38 @@ export default async function HistoryPage() {
 
   const recRows = await db
     .select({
+      skinProfileId: recommendations.skinProfileId,
       productName: products.name,
       category: recommendations.category,
-      recommendedAt: recommendations.recommendedAt,
     })
     .from(recommendations)
     .innerJoin(products, eq(products.id, recommendations.productId))
-    .where(eq(recommendations.userId, user.id))
-    .orderBy(desc(recommendations.recommendedAt));
+    .where(eq(recommendations.userId, user.id));
 
-  // 추천 페이지 방문마다 로그가 쌓이므로 "날짜 × (카테고리·제품)" 단위로 접는다
-  const recByDay = new Map<string, Map<string, Set<string>>>();
+  // 추천 로그는 진단 스냅샷당 1세트 — 스냅샷 단위로 묶어 최신순으로 보여준다
+  const snapMeta = new Map(
+    profilesAsc.map((p) => [
+      p.id,
+      { date: fmtDate(p.createdAt), source: p.source },
+    ]),
+  );
+  const recByProfile = new Map<string, Map<string, Set<string>>>();
   for (const r of recRows) {
-    const day = dayKey(r.recommendedAt);
-    if (!recByDay.has(day)) recByDay.set(day, new Map());
+    if (!recByProfile.has(r.skinProfileId))
+      recByProfile.set(r.skinProfileId, new Map());
     const cat = CATEGORY_LABELS[r.category as ProductCategory];
-    const byCat = recByDay.get(day)!;
+    const byCat = recByProfile.get(r.skinProfileId)!;
     if (!byCat.has(cat)) byCat.set(cat, new Set());
     byCat.get(cat)!.add(r.productName);
   }
-  const recDays = [...recByDay.entries()].slice(0, 10);
+  const recGroups = profilesAsc
+    .filter((p) => recByProfile.has(p.id))
+    .reverse()
+    .map((p) => ({
+      id: p.id,
+      meta: snapMeta.get(p.id)!,
+      byCat: recByProfile.get(p.id)!,
+    }));
 
   const troubleRows = await db
     .select({
@@ -212,20 +220,28 @@ export default async function HistoryPage() {
 
           <section className="space-y-3">
             <h2 className="text-sm font-semibold text-neutral-900">추천 이력</h2>
-            {recDays.length === 0 ? (
+            <p className="text-xs text-neutral-400">
+              진단 스냅샷마다 한 세트씩 생성됩니다.
+            </p>
+            {recGroups.length === 0 ? (
               <p className="text-sm text-neutral-400">
                 아직 추천 기록이 없어요.
               </p>
             ) : (
               <ul className="space-y-3">
-                {recDays.map(([day, byCat]) => (
+                {recGroups.map((g) => (
                   <li
-                    key={day}
+                    key={g.id}
                     className="rounded-lg border border-neutral-200 bg-white p-4 text-sm"
                   >
-                    <p className="mb-1 font-medium text-neutral-900">{day}</p>
+                    <p className="mb-1 font-medium text-neutral-900">
+                      {g.meta.date}
+                      <span className="ml-2 text-xs font-normal text-neutral-400">
+                        {g.meta.source === "onboarding" ? "온보딩" : "체크인"}
+                      </span>
+                    </p>
                     <ul className="space-y-0.5 text-neutral-600">
-                      {[...byCat.entries()].map(([cat, names]) => (
+                      {[...g.byCat.entries()].map(([cat, names]) => (
                         <li key={cat}>
                           <span className="text-neutral-400">{cat}</span>{" "}
                           {[...names].join(", ")}

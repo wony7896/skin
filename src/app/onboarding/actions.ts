@@ -3,6 +3,7 @@
 import { db } from "@/db";
 import { skinProfiles, userMedications } from "@/db/schema";
 import { getSessionUser } from "@/lib/auth";
+import { generateRecommendationsForProfile } from "@/lib/recommendation";
 import type { OnboardingData } from "@/components/onboarding/types";
 
 export async function submitOnboarding(data: OnboardingData) {
@@ -58,6 +59,14 @@ export async function submitOnboarding(data: OnboardingData) {
 
   if (medicationRows.length > 0) {
     await db.insert(userMedications).values(medicationRows);
+  }
+
+  // 이 스냅샷에 대한 추천 로그를 이 시점에 한 번 생성한다 (PRD 섹션 2 "시점별 추천 로그").
+  // 실패해도 온보딩 제출 자체는 성공 처리하고, /recommendations 렌더에서 재시도된다.
+  try {
+    await generateRecommendationsForProfile(user.id, profile.id);
+  } catch (err) {
+    console.error("추천 로그 생성 실패 (온보딩)", err);
   }
 
   return { success: true as const, profileId: profile.id };
