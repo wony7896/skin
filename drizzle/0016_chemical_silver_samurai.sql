@@ -1,1 +1,0 @@
-ALTER TABLE "ingredients" ADD COLUMN "is_approved_preservative" boolean DEFAULT false NOT NULL;

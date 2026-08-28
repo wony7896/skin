@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: typecheck · lint · build
+    runs-on: ubuntu-latest
+    env:
+      # 빌드는 런타임에만 쓰이는 값이라 더미로 충분하다 (모든 페이지가 동적 렌더)
+      NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:54321
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-dummy-anon-key
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run build
+
+  migrations:
+    name: migrations apply from empty
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      # supabase start는 빈 DB에 supabase/migrations/*.sql를 순서대로 적용한다.
+      # 하나라도 실패하면 이 잡이 깨지므로, "빈 DB에서 스키마 재현 가능" 이 항상 보장된다.
+      - run: npx supabase start
+      - run: npx supabase db lint --level warning
+      - if: always()
+        run: npx supabase stop

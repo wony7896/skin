@@ -1,1 +1,0 @@
-ALTER TABLE "excluded_ingredients" ADD CONSTRAINT "excluded_ingredients_user_id_ingredient_id_unique" UNIQUE("user_id","ingredient_id");
