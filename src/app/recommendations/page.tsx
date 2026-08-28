@@ -84,20 +84,15 @@ export default async function RecommendationsPage({
         <h1 className="mb-2 text-xl font-semibold text-neutral-900">
           맞춤 추천
         </h1>
-        <p className="mb-2 text-sm text-neutral-500">
+        <p className="mb-8 text-sm text-neutral-500">
           제외 성분이 없는 제품 중에서, 설정하신 목표에 맞는 순서로 보여드려요.
         </p>
 
-        <a
-          href={includeInternational ? "/recommendations" : "/recommendations?intl=1"}
-          className={`mb-8 inline-block rounded-full border px-3 py-1 text-xs ${
-            includeInternational
-              ? "border-neutral-900 bg-neutral-900 text-white"
-              : "border-neutral-300 bg-white text-neutral-600"
-          }`}
-        >
-          {includeInternational ? "해외 제품 포함 중" : "해외 제품 포함해서 보기"}
-        </a>
+        {/* 해외 포함 토글 UI는 숨김 처리 — ?intl=1 쿼리 파라미터로는 여전히 동작함.
+            2026-08-26 세션에는 국내(KR) 카테고리가 비어 있어 임시로 노출했었으나,
+            5개 카테고리 모두 실제 KR 제품 5개(브랜드 18종 다양화)로 채워지면서
+            PRD 섹션 4 "국내 우선" 원안대로 다시 숨김. 로직은 살아있으니 필요해지면
+            이 자리에 토글만 추가하면 된다. */}
 
         {resultsByCategory.map(({ category, results }) => (
           <section key={category} className="mb-8">
