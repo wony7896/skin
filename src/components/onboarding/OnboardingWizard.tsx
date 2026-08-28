@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Link from "next/link";
 import { submitOnboarding } from "@/app/onboarding/actions";
 import { StepA } from "./StepA";
 import { StepB } from "./StepB";
@@ -54,9 +55,14 @@ export function OnboardingWizard() {
           진단 설문이 완료됐어요
         </h1>
         <p className="mt-2 text-neutral-500">
-          자가 평가 참고용 결과이며, 의학적 진단이 아닙니다. 곧 맞춤 추천으로
-          이어드릴게요.
+          자가 평가 참고용 결과이며, 의학적 진단이 아닙니다.
         </p>
+        <Link
+          href="/recommendations"
+          className="mt-6 inline-block rounded-lg bg-neutral-900 px-6 py-2 text-sm font-medium text-white"
+        >
+          맞춤 추천 보기
+        </Link>
       </div>
     );
   }

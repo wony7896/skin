@@ -7,6 +7,7 @@ import {
   compareRednessRatios,
   estimateRednessRatio,
 } from "@/lib/skin-photo-analysis";
+import { getSessionUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 
 async function downloadAndRatio(
@@ -22,10 +23,7 @@ async function downloadAndRatio(
 }
 
 export async function analyzeSkinPhoto(path: string) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { supabase, user } = await getSessionUser();
 
   if (!user) {
     return { success: false as const, error: "로그인이 필요합니다." as const };

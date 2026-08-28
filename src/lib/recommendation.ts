@@ -5,6 +5,7 @@ import {
   ingredients,
   productIngredients,
   products,
+  recommendations,
   skinProfiles,
 } from "@/db/schema";
 
@@ -113,6 +114,7 @@ export async function getRecommendations(
   userId: string,
   category: ProductCategory,
   countries: string[] = DEFAULT_COUNTRIES,
+  skinProfileId?: string,
 ): Promise<ScoredProduct[]> {
   const [latestProfile] = await db
     .select({
@@ -126,7 +128,12 @@ export async function getRecommendations(
       prefersColorFree: skinProfiles.prefersColorFree,
     })
     .from(skinProfiles)
-    .where(eq(skinProfiles.userId, userId))
+    // skinProfileId를 주면 그 스냅샷 기준으로, 안 주면 최신 스냅샷 기준으로 채점
+    .where(
+      skinProfileId
+        ? eq(skinProfiles.id, skinProfileId)
+        : eq(skinProfiles.userId, userId),
+    )
     .orderBy(desc(skinProfiles.createdAt))
     .limit(1);
 
@@ -409,6 +416,47 @@ export async function getRecommendations(
   }
 
   return scored.sort((a, b) => b.score - a.score);
+}
+
+// 진단 스냅샷 1건에 대한 추천 로그를 딱 한 번 생성한다. 스냅샷은 불변이므로
+// 이미 만들어져 있으면 아무것도 하지 않는다 — 온보딩·체크인 제출 시 호출되고,
+// 누락됐을 때를 대비해 /recommendations 렌더에서도 방어적으로 한 번 더 호출한다.
+export async function generateRecommendationsForProfile(
+  userId: string,
+  skinProfileId: string,
+  countries: string[] = DEFAULT_COUNTRIES,
+): Promise<void> {
+  const [existing] = await db
+    .select({ id: recommendations.id })
+    .from(recommendations)
+    .where(eq(recommendations.skinProfileId, skinProfileId))
+    .limit(1);
+  if (existing) return;
+
+  const rows: (typeof recommendations.$inferInsert)[] = [];
+  for (const category of CATEGORY_ORDER) {
+    const scored = await getRecommendations(
+      userId,
+      category,
+      countries,
+      skinProfileId,
+    );
+    for (const product of scored.slice(0, 3)) {
+      rows.push({
+        userId,
+        skinProfileId,
+        productId: product.productId,
+        category,
+        safetyPassed: true,
+        goalFitScore: product.score.toString(),
+        reason: product.reasons.join(" · ") || "제외 성분 없음",
+      });
+    }
+  }
+
+  if (rows.length > 0) {
+    await db.insert(recommendations).values(rows);
+  }
 }
 
 // PRD 섹션 4: MVP는 국내(KR) 한정, Phase 3부터 성분 표기가 비교적 명확한 채널(iHerb 등)의

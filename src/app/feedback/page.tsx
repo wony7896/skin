@@ -1,20 +1,13 @@
 import { desc, eq } from "drizzle-orm";
-import { redirect } from "next/navigation";
 import { db } from "@/db";
 import { products, recommendations, usageFeedback } from "@/db/schema";
 import { CATEGORY_LABELS, type ProductCategory } from "@/lib/recommendation";
 import { FeedbackForm } from "@/components/feedback/FeedbackForm";
-import { createClient } from "@/lib/supabase/server";
+import { AppHeader } from "@/components/AppHeader";
+import { requireUser } from "@/lib/auth";
 
 export default async function FeedbackPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/login");
-  }
+  const { user } = await requireUser();
 
   const allRecommendations = await db
     .select({
@@ -48,7 +41,9 @@ export default async function FeedbackPage() {
   const items = [...latestByProduct.values()];
 
   return (
-    <main className="min-h-screen bg-neutral-50 px-4 py-10">
+    <>
+      <AppHeader />
+      <main className="min-h-screen bg-neutral-50 px-4 py-10">
       <div className="mx-auto max-w-xl">
         <h1 className="mb-2 text-xl font-semibold text-neutral-900">
           사용 피드백
@@ -86,6 +81,7 @@ export default async function FeedbackPage() {
           </ul>
         )}
       </div>
-    </main>
+      </main>
+    </>
   );
 }
