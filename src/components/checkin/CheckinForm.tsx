@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Link from "next/link";
 import { submitCheckin } from "@/app/checkin/actions";
 import {
   Field,
@@ -113,6 +114,17 @@ export function CheckinForm({
         <p className="mt-2 text-neutral-500">
           변화가 프로필에 반영됐어요. 다음 체크인은 2주 후에 만나요.
         </p>
+        <div className="mt-6 flex flex-col items-center gap-3">
+          <Link
+            href="/recommendations"
+            className="inline-block rounded-lg bg-neutral-900 px-6 py-2 text-sm font-medium text-white"
+          >
+            갱신된 추천 보기
+          </Link>
+          <Link href="/history" className="text-sm text-neutral-500 underline">
+            변화 내역 보기
+          </Link>
+        </div>
       </div>
     );
   }
