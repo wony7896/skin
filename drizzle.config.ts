@@ -1,5 +1,10 @@
 import { defineConfig } from "drizzle-kit";
-import "dotenv/config";
+import { config } from "dotenv";
+
+// Next.js와 동일한 우선순위로 env를 읽는다: .env.local 이 .env 를 덮어쓴다.
+// (dotenv 의 config()는 이미 설정된 값을 덮어쓰지 않으므로 .env.local 을 먼저 로드)
+config({ path: ".env.local" });
+config({ path: ".env" });
 
 // drizzle-kit은 이제 "마이그레이션 러너"가 아니라 "DDL 생성 도우미"로만 쓴다.
 // 마이그레이션의 정본(正本)은 supabase/migrations/ 이고, 적용은 Supabase CLI가 한다.

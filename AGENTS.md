@@ -10,8 +10,10 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 # 데이터베이스 · 환경
 
-**절대 프로덕션 DB에 직접 붙지 않는다.** 개발은 로컬 스택 또는 별도 dev 프로젝트에서만.
+**절대 프로덕션 DB에 직접 붙지 않는다.** 개발은 로컬 스택 또는 개발용 Supabase 프로젝트에서만.
 
+- Supabase 프로젝트 2개: **개발** `rhayjzneuvaayervloki`(로컬이 링크·연결), **운영** `ocjsoichnjmihpsainjd`(Vercel Production + GitHub Actions 만). 세부는 [supabase/README.md](supabase/README.md).
+- 운영 DB 에는 `db reset`·seed 를 절대 실행하지 않는다. main push 시 `.github/workflows/deploy-migrations.yml` 이 `db push` 만 수행한다.
 - 스키마 정본: `src/db/schema/*.ts` (타입 쿼리용) + `supabase/migrations/*.sql` (적용 정본)
 - 마이그레이션 러너는 **Supabase CLI 하나**. drizzle-kit은 `db:generate`로 DDL 초안만 뽑는 도우미이며 `drizzle/.generated/`(gitignore)에 쓴다 → 필요한 SQL을 `supabase migration new`로 옮긴다.
 - RLS·정책·함수·트리거·스토리지는 drizzle을 거치지 않고 `supabase migration new`로 직접 SQL 작성.
