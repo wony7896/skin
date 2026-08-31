@@ -5,7 +5,9 @@ import {
   ingredients,
   productIngredients,
   products,
+  recommendations,
   skinProfiles,
+  usageFeedback,
 } from "@/db/schema";
 
 export type ProductCategory =
@@ -24,12 +26,25 @@ export type SkinGoal =
 
 // PRD 섹션 3 "카테고리별 컨선 특화 성분" — 에센스/세럼 표에 명시된 매핑을 기준으로,
 // 같은 액티브가 다른 카테고리 제품에도 쓰이면 동일하게 가점한다.
-const GOAL_INGREDIENTS: Record<SkinGoal, string[]> = {
-  brightening: ["Niacinamide", "Ascorbic Acid"],
-  wrinkle_elasticity: ["Retinol", "Adenosine", "Copper Tripeptide-1"],
-  trouble_care: ["Salicylic Acid", "Melaleuca Alternifolia (Tea Tree) Leaf Oil"],
-  hydration: ["Hyaluronic Acid", "Panthenol", "Squalane", "Ceramide NP", "Glycerin"],
-  pore: ["Salicylic Acid", "Niacinamide"],
+//
+// 값은 목표 대비 상대 기여도. 글리세린처럼 거의 모든 스킨케어에 들어가는 범용 보습제는
+// 있다는 사실만으로는 제품 간 변별력이 없어 낮게 잡고(0.25), 목표를 실제로 대표하는
+// 액티브(히알루론산·세라마이드 등)는 1로 둔다.
+const GOAL_INGREDIENTS: Record<SkinGoal, Record<string, number>> = {
+  brightening: { Niacinamide: 1, "Ascorbic Acid": 1 },
+  wrinkle_elasticity: { Retinol: 1, Adenosine: 1, "Copper Tripeptide-1": 1 },
+  trouble_care: {
+    "Salicylic Acid": 1,
+    "Melaleuca Alternifolia (Tea Tree) Leaf Oil": 0.7,
+  },
+  hydration: {
+    "Hyaluronic Acid": 1,
+    "Ceramide NP": 1,
+    Panthenol: 0.8,
+    Squalane: 0.8,
+    Glycerin: 0.25,
+  },
+  pore: { "Salicylic Acid": 1, Niacinamide: 0.8 },
 };
 
 // PRD 섹션 3 클렌징 행: 계면활성제 종류(아미노산계 vs 설페이트계) 구분
@@ -113,6 +128,7 @@ export async function getRecommendations(
   userId: string,
   category: ProductCategory,
   countries: string[] = DEFAULT_COUNTRIES,
+  skinProfileId?: string,
 ): Promise<ScoredProduct[]> {
   const [latestProfile] = await db
     .select({
@@ -126,7 +142,12 @@ export async function getRecommendations(
       prefersColorFree: skinProfiles.prefersColorFree,
     })
     .from(skinProfiles)
-    .where(eq(skinProfiles.userId, userId))
+    // skinProfileId를 주면 그 스냅샷 기준으로, 안 주면 최신 스냅샷 기준으로 채점
+    .where(
+      skinProfileId
+        ? eq(skinProfiles.id, skinProfileId)
+        : eq(skinProfiles.userId, userId),
+    )
     .orderBy(desc(skinProfiles.createdAt))
     .limit(1);
 
@@ -156,6 +177,50 @@ export async function getRecommendations(
       .from(ingredients)
       .where(inArray(ingredients.inciName, PREGNANCY_CAUTION_INGREDIENTS));
     for (const row of cautionRows) excludedIds.add(row.id);
+  }
+
+  // 이 사용자가 이전 추천 제품에 남긴 사용 피드백을 제품별로 모은다. 추천 로그는 진단
+  // 스냅샷 시점에 고정되므로, 이 조정은 "다음 진단 스냅샷(체크인)"부터 반영된다.
+  const feedbackRows = await db
+    .select({
+      productId: recommendations.productId,
+      satisfactionScore: usageFeedback.satisfactionScore,
+      hadTrouble: usageFeedback.hadTrouble,
+      repurchaseIntent: usageFeedback.repurchaseIntent,
+    })
+    .from(usageFeedback)
+    .innerJoin(
+      recommendations,
+      eq(recommendations.id, usageFeedback.recommendationId),
+    )
+    .where(eq(usageFeedback.userId, userId));
+
+  const feedbackByProduct = new Map<
+    string,
+    {
+      satisfactionSum: number;
+      satisfactionCount: number;
+      anyTrouble: boolean;
+      repurchaseYes: number;
+      repurchaseNo: number;
+    }
+  >();
+  for (const f of feedbackRows) {
+    const s = feedbackByProduct.get(f.productId) ?? {
+      satisfactionSum: 0,
+      satisfactionCount: 0,
+      anyTrouble: false,
+      repurchaseYes: 0,
+      repurchaseNo: 0,
+    };
+    if (f.satisfactionScore != null) {
+      s.satisfactionSum += f.satisfactionScore;
+      s.satisfactionCount += 1;
+    }
+    if (f.hadTrouble) s.anyTrouble = true;
+    if (f.repurchaseIntent === true) s.repurchaseYes += 1;
+    if (f.repurchaseIntent === false) s.repurchaseNo += 1;
+    feedbackByProduct.set(f.productId, s);
   }
 
   const rows = await db
@@ -272,19 +337,26 @@ export async function getRecommendations(
           ? GOAL_PRIORITY_WEIGHT[rankInPriority] ?? GOAL_SECONDARY_WEIGHT
           : GOAL_SECONDARY_WEIGHT;
 
-      const matchedIngredients = GOAL_INGREDIENTS[goal].filter((inci) =>
+      const potencyByInci = GOAL_INGREDIENTS[goal];
+      const matchedIngredients = Object.keys(potencyByInci).filter((inci) =>
         product.inciNames.has(inci),
       );
       if (matchedIngredients.length > 0) {
-        // 매칭된 액티브 중 표기 순서가 가장 앞선(=고농도 추정) 성분을 대표로 채택
-        const bestInci = matchedIngredients.reduce((best, cur) => {
-          const curPos = product.positions.get(cur) ?? Infinity;
-          const bestPos = product.positions.get(best) ?? Infinity;
-          return curPos < bestPos ? cur : best;
-        });
+        // 매칭된 액티브 중 "기여도 × 함량 추정"이 가장 높은 성분을 대표로 채택.
+        // (표기 순서가 앞설수록 함량이 높다고 보고, 범용 보습제는 기여도로 눌러준다.)
+        const effect = (inci: string) => {
+          const pos = product.positions.get(inci) ?? product.totalIngredients;
+          return (
+            potencyByInci[inci] *
+            concentrationMultiplier(pos, product.totalIngredients)
+          );
+        };
+        const bestInci = matchedIngredients.reduce((best, cur) =>
+          effect(cur) > effect(best) ? cur : best,
+        );
         const position = product.positions.get(bestInci) ?? product.totalIngredients;
         const multiplier = concentrationMultiplier(position, product.totalIngredients);
-        score += weight * 10 * multiplier;
+        score += weight * 10 * multiplier * potencyByInci[bestInci];
         const label = product.koreanNames.get(bestInci) ?? bestInci;
         reasons.push(
           `목표(${GOAL_LABELS[goal]})에 맞는 ${label} 함유${concentrationNote(multiplier)}`,
@@ -392,6 +464,32 @@ export async function getRecommendations(
       }
     }
 
+    // ④ 이전 사용 피드백 반영 — 같은 제품을 실제로 써 본 결과가 있으면 다음 추천에 가감점.
+    const feedback = feedbackByProduct.get(productId);
+    if (feedback) {
+      if (feedback.anyTrouble) {
+        score -= 25;
+        reasons.push("이전 사용에서 트러블 보고 — 감점");
+      }
+      if (feedback.satisfactionCount > 0) {
+        const avg = feedback.satisfactionSum / feedback.satisfactionCount;
+        if (avg >= 4) {
+          score += 10;
+          reasons.push(`이전 사용 만족도 높음 (${avg.toFixed(1)}/5)`);
+        } else if (avg <= 2) {
+          score -= 12;
+          reasons.push(`이전 사용 만족도 낮음 (${avg.toFixed(1)}/5)`);
+        }
+      }
+      if (feedback.repurchaseYes > feedback.repurchaseNo) {
+        score += 5;
+        reasons.push("재구매 의사 있음");
+      } else if (feedback.repurchaseNo > feedback.repurchaseYes) {
+        score -= 5;
+        reasons.push("재구매 의사 없음");
+      }
+    }
+
     scored.push({
       productId,
       name: product.name,
@@ -409,6 +507,47 @@ export async function getRecommendations(
   }
 
   return scored.sort((a, b) => b.score - a.score);
+}
+
+// 진단 스냅샷 1건에 대한 추천 로그를 딱 한 번 생성한다. 스냅샷은 불변이므로
+// 이미 만들어져 있으면 아무것도 하지 않는다 — 온보딩·체크인 제출 시 호출되고,
+// 누락됐을 때를 대비해 /recommendations 렌더에서도 방어적으로 한 번 더 호출한다.
+export async function generateRecommendationsForProfile(
+  userId: string,
+  skinProfileId: string,
+  countries: string[] = DEFAULT_COUNTRIES,
+): Promise<void> {
+  const [existing] = await db
+    .select({ id: recommendations.id })
+    .from(recommendations)
+    .where(eq(recommendations.skinProfileId, skinProfileId))
+    .limit(1);
+  if (existing) return;
+
+  const rows: (typeof recommendations.$inferInsert)[] = [];
+  for (const category of CATEGORY_ORDER) {
+    const scored = await getRecommendations(
+      userId,
+      category,
+      countries,
+      skinProfileId,
+    );
+    for (const product of scored.slice(0, 3)) {
+      rows.push({
+        userId,
+        skinProfileId,
+        productId: product.productId,
+        category,
+        safetyPassed: true,
+        goalFitScore: product.score.toString(),
+        reason: product.reasons.join(" · ") || "제외 성분 없음",
+      });
+    }
+  }
+
+  if (rows.length > 0) {
+    await db.insert(recommendations).values(rows);
+  }
 }
 
 // PRD 섹션 4: MVP는 국내(KR) 한정, Phase 3부터 성분 표기가 비교적 명확한 채널(iHerb 등)의

@@ -32,6 +32,10 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
+
+# claude code — 앱 실행 설정(launch.json)은 커밋, 개인 설정은 제외
+.claude/settings.local.json
 
 # vercel
 .vercel
@@ -39,3 +43,11 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# drizzle-kit codegen scratch (copy relevant SQL into supabase/migrations/, don't commit this)
+/drizzle/.generated
+
+# supabase CLI
+/supabase/.branches
+/supabase/.temp
+/supabase/.env

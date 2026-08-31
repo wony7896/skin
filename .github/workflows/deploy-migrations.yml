@@ -1,0 +1,54 @@
+name: Deploy migrations
+
+# main에 supabase/migrations/*.sql 가 들어오면 운영 Supabase 프로젝트에 적용한다.
+# - db push 만 실행한다. db reset·seed 는 절대 돌리지 않는다 (운영 데이터 보호).
+# - PR 에서는 dry-run 으로 "무엇이 적용될지"만 보여준다.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "supabase/migrations/**"
+  pull_request:
+    paths:
+      - "supabase/migrations/**"
+      - ".github/workflows/deploy-migrations.yml"
+
+concurrency:
+  group: deploy-migrations
+  cancel-in-progress: false
+
+env:
+  # 운영 프로젝트 ref (비밀 아님). 개발 프로젝트는 rhayjzneuvaayervloki.
+  SUPABASE_PROJECT_REF: ocjsoichnjmihpsainjd
+
+jobs:
+  dry-run:
+    name: db push --dry-run (PR 미리보기)
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - run: supabase link --project-ref "$SUPABASE_PROJECT_REF"
+      - run: supabase db push --dry-run
+
+  deploy:
+    name: db push → 운영
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - run: supabase link --project-ref "$SUPABASE_PROJECT_REF"
+      - run: supabase db push --yes

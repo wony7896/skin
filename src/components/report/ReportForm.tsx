@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Link from "next/link";
 import {
   confirmSuspectedIngredients,
   submitTroubleReport,
@@ -82,9 +83,20 @@ export function ReportForm({
         </h1>
         <p className="mt-2 text-neutral-500">
           {stage.addedCount > 0
-            ? `${stage.addedCount}개 성분을 의심 성분 리스트에 추가했어요.`
+            ? `${stage.addedCount}개 성분을 의심 성분 리스트에 추가했어요. 다음 진단부터 추천에서 제외돼요.`
             : "선택한 성분이 없어 제외 리스트는 변경하지 않았어요."}
         </p>
+        <div className="mt-6 flex flex-col items-center gap-3">
+          <Link
+            href="/checkin"
+            className="inline-block rounded-lg bg-neutral-900 px-6 py-2 text-sm font-medium text-white"
+          >
+            체크인하고 추천 갱신하기
+          </Link>
+          <Link href="/history" className="text-sm text-neutral-500 underline">
+            제외 성분 내역 보기
+          </Link>
+        </div>
       </div>
     );
   }

@@ -3,7 +3,7 @@
 import { eq, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { excludedIngredients, ingredients, productIngredients, troubleReports } from "@/db/schema";
-import { createClient } from "@/lib/supabase/server";
+import { getSessionUser } from "@/lib/auth";
 
 export type ImplicatedIngredient = {
   id: string;
@@ -18,10 +18,7 @@ export async function submitTroubleReport(input: {
   severity: number;
   photoPath: string | null;
 }) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { user } = await getSessionUser();
 
   if (!user) {
     return { success: false as const, error: "로그인이 필요합니다." as const };
@@ -57,10 +54,7 @@ export async function submitTroubleReport(input: {
 }
 
 export async function confirmSuspectedIngredients(ingredientIds: string[]) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { user } = await getSessionUser();
 
   if (!user) {
     return { success: false as const, error: "로그인이 필요합니다." as const };

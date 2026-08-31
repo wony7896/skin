@@ -1,1 +1,0 @@
-ALTER TABLE "products" ADD COLUMN "country" text DEFAULT 'KR' NOT NULL;
