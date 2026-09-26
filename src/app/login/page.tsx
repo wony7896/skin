@@ -1,4 +1,6 @@
+import { redirect } from "next/navigation";
 import { LoginForm } from "@/components/auth/LoginForm";
+import { getSessionUser } from "@/lib/auth";
 
 const NOTICES: Record<string, string> = {
   deleted: "회원탈퇴가 완료됐어요. 이용해주셔서 감사합니다.",
@@ -11,6 +13,13 @@ export default async function LoginPage({
   searchParams: Promise<{ deleted?: string; error?: string }>;
 }) {
   const { deleted, error } = await searchParams;
+
+  // 이미 로그인한 사용자는 폼을 보여주지 않고 앱 홈으로 보낸다
+  const { user } = await getSessionUser();
+  if (user) {
+    redirect("/recommendations");
+  }
+
   const notice = deleted ? NOTICES.deleted : error ? NOTICES[error] : null;
 
   return (

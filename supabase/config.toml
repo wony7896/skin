@@ -222,7 +222,9 @@ enable_signup = true
 # addresses. If disabled, only the new email is required to confirm.
 double_confirm_changes = true
 # If enabled, users need to confirm their email address before signing in.
-enable_confirmations = true
+# 꺼둠: 가입 즉시 세션을 발급해 앱으로 바로 진입시킨다. 가입 완료 안내 메일은
+# Supabase 인증메일이 아니라 앱이 Resend로 직접 보낸다 (src/lib/email.ts).
+enable_confirmations = false
 # If enabled, users will need to reauthenticate or have logged in recently to change their password.
 secure_password_change = false
 # Controls the minimum amount of time that must pass before sending another signup confirmation or password reset email.

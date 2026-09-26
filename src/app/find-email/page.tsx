@@ -1,9 +1,8 @@
 import { redirect } from "next/navigation";
-import { SignupForm } from "@/components/auth/SignupForm";
+import { FindEmailForm } from "@/components/auth/FindEmailForm";
 import { getSessionUser } from "@/lib/auth";
 
-export default async function SignupPage() {
-  // 이미 로그인한 사용자는 가입 폼 대신 앱 홈으로 보낸다
+export default async function FindEmailPage() {
   const { user } = await getSessionUser();
   if (user) {
     redirect("/recommendations");
@@ -11,7 +10,7 @@ export default async function SignupPage() {
 
   return (
     <main className="min-h-screen bg-neutral-50 px-4">
-      <SignupForm />
+      <FindEmailForm />
     </main>
   );
 }

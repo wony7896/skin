@@ -1,5 +1,8 @@
+import { eq } from "drizzle-orm";
 import Link from "next/link";
 import { signOut } from "@/app/login/actions";
+import { db } from "@/db";
+import { userProfiles } from "@/db/schema";
 import { AppHeader } from "@/components/AppHeader";
 import { ConsentManager } from "@/components/account/ConsentManager";
 import { DeleteAccountForm } from "@/components/account/DeleteAccountForm";
@@ -9,9 +12,16 @@ import { requireUser } from "@/lib/auth";
 export default async function AccountPage() {
   const { user } = await requireUser();
 
-  const [sensitive, biometric] = await Promise.all([
-    hasConsent(user.id, "sensitive_health_info"),
-    hasConsent(user.id, "biometric_photo"),
+  const [[sensitive, biometric], [contact]] = await Promise.all([
+    Promise.all([
+      hasConsent(user.id, "sensitive_health_info"),
+      hasConsent(user.id, "biometric_photo"),
+    ]),
+    db
+      .select({ name: userProfiles.name, phone: userProfiles.phone })
+      .from(userProfiles)
+      .where(eq(userProfiles.userId, user.id))
+      .limit(1),
   ]);
   const granted: Record<ConsentType, boolean> = {
     sensitive_health_info: sensitive,
@@ -39,10 +49,24 @@ export default async function AccountPage() {
                 <span className="text-neutral-900">{user.email}</span>
               </div>
               <div className="flex justify-between py-1">
+                <span className="text-neutral-500">이름</span>
+                <span className="text-neutral-900">{contact?.name ?? "-"}</span>
+              </div>
+              <div className="flex justify-between py-1">
+                <span className="text-neutral-500">전화번호</span>
+                <span className="text-neutral-900">{contact?.phone ?? "-"}</span>
+              </div>
+              <div className="flex justify-between py-1">
                 <span className="text-neutral-500">가입일</span>
                 <span className="text-neutral-900">{joined}</span>
               </div>
             </div>
+            <Link
+              href="/account/profile"
+              className="inline-block rounded-lg border border-neutral-300 px-4 py-2 text-sm text-neutral-700"
+            >
+              이름·전화번호 수정
+            </Link>
           </section>
 
           <section className="space-y-2">

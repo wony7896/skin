@@ -6,3 +6,4 @@ export * from "./ingredients";
 export * from "./products";
 export * from "./profiles";
 export * from "./recommendations";
+export * from "./userProfiles";

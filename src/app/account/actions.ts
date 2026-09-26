@@ -3,9 +3,11 @@
 import { and, eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
-import { userConsents } from "@/db/schema";
+import { userConsents, userProfiles } from "@/db/schema";
+import { authErrorMessage } from "@/lib/auth-errors";
 import { getSessionUser } from "@/lib/auth";
 import type { ConsentType } from "@/lib/consent";
+import { isValidPhone, normalizePhone } from "@/lib/phone";
 
 export async function updatePassword(formData: FormData) {
   const password = String(formData.get("password") ?? "");
@@ -25,10 +27,38 @@ export async function updatePassword(formData: FormData) {
 
   const { error } = await supabase.auth.updateUser({ password });
   if (error) {
-    return { error: error.message };
+    return { error: authErrorMessage(error) };
   }
 
   return { message: "비밀번호를 변경했어요." as const };
+}
+
+// "아이디 찾기"에 쓰이는 이름·전화번호 수정 (가입 시 잘못 입력했거나 기존 사용자 보완용)
+export async function updateContactProfile(formData: FormData) {
+  const name = String(formData.get("name") ?? "").trim();
+  const phone = normalizePhone(String(formData.get("phone") ?? ""));
+
+  if (!name) {
+    return { error: "이름을 입력해주세요." as const };
+  }
+  if (!isValidPhone(phone)) {
+    return { error: "전화번호를 정확히 입력해주세요." as const };
+  }
+
+  const { user } = await getSessionUser();
+  if (!user) {
+    return { error: "로그인이 필요합니다." as const };
+  }
+
+  await db
+    .insert(userProfiles)
+    .values({ userId: user.id, name, phone })
+    .onConflictDoUpdate({
+      target: userProfiles.userId,
+      set: { name, phone, updatedAt: new Date() },
+    });
+
+  return { message: "저장했어요." as const };
 }
 
 export async function revokeConsent(consentType: ConsentType) {

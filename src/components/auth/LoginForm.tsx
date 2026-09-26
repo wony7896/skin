@@ -49,9 +49,14 @@ export function LoginForm({ notice }: { notice?: string | null }) {
       </button>
 
       <div className="flex items-center justify-between text-sm text-neutral-500">
-        <Link href="/forgot-password" className="underline">
-          비밀번호를 잊으셨나요?
-        </Link>
+        <div className="flex gap-3">
+          <Link href="/find-email" className="underline">
+            아이디 찾기
+          </Link>
+          <Link href="/forgot-password" className="underline">
+            비밀번호 찾기
+          </Link>
+        </div>
         <Link href="/signup" className="text-neutral-900 underline">
           회원가입
         </Link>
