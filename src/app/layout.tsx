@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -16,6 +16,18 @@ export const metadata: Metadata = {
   title: "맞춤 스킨케어 추천",
   description:
     "피부 상태·목표·알레르기 이력 기반으로 제외 성분을 거르고 목표에 맞는 제품을 추천합니다. 자가 평가 참고용.",
+  appleWebApp: {
+    capable: true,
+    title: "스킨케어",
+    statusBarStyle: "default",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#0a0a0a" },
+  ],
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
